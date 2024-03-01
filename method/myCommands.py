@@ -3,7 +3,7 @@ import discord
 from easy_pil import *
 import asyncio
 
-print("myCommands.py")
+# print("myCommands.py")
 async def check_bot_permissions(ctx):
   print("Checking bot permissions...")
   # Check permissions in the channel where the command was invoked
@@ -17,14 +17,14 @@ async def check_bot_permissions(ctx):
   # Respond with the permissions message
   await ctx.send(f'Bot permissions in {channel.name}:\n{permissions_message}')
 
-async def add_role(ctx, member, role):
-    # Check if the bot has the necessary permissions to manage roles
-    if ctx.guild.me.guild_permissions.manage_roles:
-        # Add the role to the member
-        await member.add_roles(role)
-        await ctx.send(f'{member.display_name} has been given the {role.name} role!')
-    else:
-        await ctx.send('The bot does not have the necessary permissions to manage roles.')
+async def add_join_role(ctx,db,channel:discord.channel,role:discord.role):
+    server = db.collection("servers").document(ctx.guild.id).collection("moderation").document("Join_Member_Role") 
+    sevrer_data = server.get()
+    print("sevrer_data:",sevrer_data.to_dict())
+    data = {"status":True,"channel_id":f'{channel.id}','channel_name':f'{channel.name}','role_id':f"{role.id}",'role_name':f"{role.name}"}
+    print('DATA:',data)
+    sevrer_data.update(data)
+    await ctx.send(f'Join role has been set to {role.name}!')
 
 async def clear(ctx, amount: int):
     # Check if the command user has the "Manage Messages" permission

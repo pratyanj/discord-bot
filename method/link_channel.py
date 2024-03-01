@@ -1,7 +1,7 @@
 import discord
 import asyncio
 
-print("Link_channel.py")
+# print("Link_channel.py")
 async def del_link_msg(message, link_channel_list, bot):
     if not message.content.startswith("http") and not message.content.startswith("https"):
         if message.channel.id in link_channel_list and not message.author.bot:   

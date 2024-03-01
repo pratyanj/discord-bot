@@ -1,7 +1,7 @@
 # update_member_count.py
 from discord.ext import tasks
 
-print("update_member_count.py")
+# print("update_member_count.py")
 @tasks.loop(minutes=10)
 async def updateMemberCount(bot, server_id, member_count_channel_id):
     try:

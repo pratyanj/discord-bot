@@ -1,23 +1,28 @@
 # welcome_leave.py
 import discord
-print("welcomeleave.py")
+
+# print("welcomeleave.py")
 async def welcome(member, db):
-    server = db.collection("servers").document(int(member.guild.id))
+    server = db.collection("servers").document(str(member.guild.id))
     if not server.get().exists:
         return
     channel = server.collection("Welcome_Leave").document("welcome").get()
     if channel.to_dict()["status"] == False or "false":
         return
-    welcome_channel_id = channel.to_dict()['channel_id']
+    if channel.to_dict()["message"] == '':
+        message = f"Welcome to the server, {member.mention}! We are glad to have you."
+    else:
+        message = channel.to_dict()["message"]
+    if channel.to_dict()["channel_id"] == 0:
+        return
+    else:
+        welcome_channel_id = channel.to_dict()['channel_id']
+    
     print("welcome_channel_id:",welcome_channel_id)
     welcome_channel = member.guild.get_channel(welcome_channel_id)
     welcome_message = discord.Embed(
         title="Welcome to",
-        description=f'''
-        Welcome to the server, {member.mention}! We are glad to have you.
-            ->please read the rules in {member.guild.get_channel(1187003769284739114)}.
-            ->Check server update in {member.guild.get_channel(1187004344437051474)}.
-        ''',
+        description=message,
         color=discord.Colour.from_rgb(0, 96, 154))
     await welcome_channel.send(embed=welcome_message)
 

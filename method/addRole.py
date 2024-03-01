@@ -1,12 +1,28 @@
 import discord
-print("addRole.py")
-async def TO_member(payload,rule_channel_id,member_role_id):
+# print("addRole.py")
+async def TO_member(payload,db):
   # Check if the reaction was added in the correct channel
+  guild_id = str(payload.member.guild.id)  # Convert guild.id to a string
+
+  print(guild_id)
+  print(f'Member: {payload.member}')
+
+  server = db.collection("servers").document(guild_id).collection("moderation").document("Join_Member_Role") 
+  sevrer_data = server.get()
+  print(sevrer_data.to_dict())
+  if sevrer_data.to_dict()["status"]  == False or "false":
+    print("Role adding system is off")
+    return
+  if sevrer_data.to_dict()["channel_id"] or sevrer_data.to_dict()["role_id"] == '':
+    print('Channel ID or Role ID not configured. Returning.')
+    return 
+  rule_channel_id = sevrer_data.to_dict()['channel_id']
+  role_id = sevrer_data.to_dict()['role_id']
   print(payload.channel_id)
   print(rule_channel_id)
   if payload.channel_id == rule_channel_id:
     # Replace 'YOUR_ROLE_ID' with the actual ID of the role to give
-    role_id = member_role_id
+    role_id = role_id
     role = discord.utils.get(payload.member.guild.roles, id=role_id)
 
     print(f'Role: {role}')

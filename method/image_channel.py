@@ -1,7 +1,7 @@
 import discord
 import asyncio
 
-print("image_channel.py")
+# print("image_channel.py")
 async def del_msg(message, monitored_channel_ids, bot):
     if message.channel.id in monitored_channel_ids and not message.author.bot:
         if not message.attachments:
