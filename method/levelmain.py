@@ -16,8 +16,6 @@ async def level_on_message(message,db):
     sys = lvl.document("levelsetting")
     sysdoc = sys.get()
     doc = user.get()
-    # print("Document data:",doc.to_dict())
-    # print("Level system:",sysdoc.to_dict())
     if not doc.exists:
         data = {
                 "user_name": f"{author.name}",
@@ -27,8 +25,8 @@ async def level_on_message(message,db):
                 }
         lvl.document("user_lvl").collection('user').document(str(author.id)).set(data)
         return
-    if sysdoc.to_dict()["lvlsys"] == False:
-        # print("Level system is off")
+    if sysdoc.to_dict()["status"] == False:
+        print("Level system is off")
         return
     # data = {
     #             "user_name": f"{author.name}",
@@ -54,15 +52,26 @@ async def level_on_message(message,db):
     else:
         print("Level is more than 5")
         rand= random.randint(1,(level//2))
+        print(rand)
         if rand == 1:
             xp += random.randint(1,3)
+            print(f"xp is increased to {xp}")
             user.update({"xp":xp})
-        
+    print(f"XP: {xp}, Level: {level}")
+    # print("Document data:",doc.to_dict())
+    # print("Level system:",sysdoc.to_dict())
                     
     if xp >= 100:
         level += 1
         user.update({"level":level})
         user.update({"xp":0})
+        if sysdoc.to_dict()["message"] == '':
+            msg = f"{author.mention} leveled up to {level}"
+        else:
+            message_template = str(sysdoc.to_dict()["message"])
+            # Use str.format() to substitute placeholders
+            msg = message_template.format(user=author.mention, level=level)
+            # print('msg:',msg)
         # if sysdoc.to_dict()["lvlreq"] == level:
         #     role_id = sysdoc.to_dict()["role_id"]
         #     role = guild.get_role(role_id)
@@ -71,9 +80,8 @@ async def level_on_message(message,db):
         #         await message.channel.send(f'🏆{author.mention} has just level upto **{level}** and reworded with {role.name}✨')
         #     except discord.HTTPException:
         #         await message.channel.send(f'{author.mention} I couldn\'t add the role {role.name} to you.')
-        await message.channel.send(f'{author.mention} has leveled up to {level}!')
-        print(f"{author.mention} leveled up to {level}")
-    print(f"XP: {xp}, Level: {level}")
+        await message.channel.send(f'{msg}')
+    
 
             
             
