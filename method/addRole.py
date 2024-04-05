@@ -28,7 +28,7 @@ async def TO_member(payload,db):
     print(f'Role: {role}')
     print(f'Member: {payload.member}')
     print(f'Emoji: {payload.emoji}')
-    print(f'Role ID: {role_id}')
+    print(f'Role ID: {role_id}') 
     print(f"player_role_id: {payload.member.roles}")
     if role and str(payload.emoji) == '\U00002705':
       if role not in payload.member.roles:# white_check_mark emoji

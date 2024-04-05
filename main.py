@@ -51,15 +51,15 @@ async def on_guild_join(guild):
     "name":guild.name,
     "prefix":"$"
   }
-  db.collection("servers").document(int(guild.id)).set(data)
+  db.collection("servers").document(str(guild.id)).set(data)
   welcome = {
     "status":False,
     "channel_id":'',
     "channel_name":None,
     "message":"" 
   }
-  db.collection("servers").document(guild.id).collection("Welcome_Leave").document("welcome").set(welcome)
-  db.collection("servers").document(guild.id).collection("Welcome_Leave").document("leave").set(welcome)
+  db.collection("servers").document(str(guild.id)).collection("Welcome_Leave").document("welcome").set(welcome)
+  db.collection("servers").document(str(guild.id)).collection("Welcome_Leave").document("leave").set(welcome)
   lvlsys = {
       "status": True,
       "message": "Welcome to the server, {member.mention}! We are glad to have you.",
@@ -69,13 +69,13 @@ async def on_guild_join(guild):
       "NO_XP_channel":{},
       
   }
-  db.collection("servers").document(guild.id).collection("Levels").document("levelsetting").set(lvlsys)
-  db.collection("servers").document(guild.id).collection("Levels").document("user_lvl")
-  db.collection("servers").document(guild.id).collection("moderation").document("image_share").set({"status":False,"channel_id":{}})
-  db.collection("servers").document(guild.id).collection("moderation").document("link_share").set({"status":False,"channel_id":{}})
-  db.collection("servers").document(guild.id).collection("moderation").document("member_count").set({"status":False,"channel_id":'',"channel_name":""})
-  db.collection("servers").document(guild.id).collection("moderation").document("Join_Member_Role").set({"status":False,"channel_id":'','channel_name':"",'role_id':"",'role_name':""})
-  db.collection("servers").document(guild.id).collection("moderation").document("Youtube_Notification").set({"status":False,"channel_id":'',"channel_name":"","youtube_channels":[],"videos":{}})
+  db.collection("servers").document(str(guild.id)).collection("Levels").document("levelsetting").set(lvlsys)
+  db.collection("servers").document(str(guild.id)).collection("Levels").document("user_lvl")
+  db.collection("servers").document(str(guild.id)).collection("moderation").document("image_share").set({"status":False,"channel_id":{}})
+  db.collection("servers").document(str(guild.id)).collection("moderation").document("link_share").set({"status":False,"channel_id":{}})
+  db.collection("servers").document(str(guild.id)).collection("moderation").document("member_count").set({"status":False,"channel_id":'',"channel_name":""})
+  db.collection("servers").document(str(guild.id)).collection("moderation").document("Join_Member_Role").set({"status":False,"channel_id":'','channel_name':"",'role_id':"",'role_name':""})
+  db.collection("servers").document(str(guild.id)).collection("moderation").document("Youtube_Notification").set({"status":False,"channel_id":'',"channel_name":"","youtube_channels":[],"videos":{}})
   
 @bot.event
 async def on_message(message):
@@ -197,7 +197,7 @@ async def updateMemberCount():
 @tasks.loop(minutes=10)
 async def youtube():
   for guild in bot.guilds:
-      print(guild.name)
+      # print(guild.name)
       # print(guild.id)
       # print(guild.icon)
       youtube_notification = db.collection("servers").document(str(guild.id)).collection("moderation").document("Youtube_Notification").get()
@@ -224,6 +224,7 @@ def run_discord_bot():
 def run_fastapi_app():
     import uvicorn
     uvicorn.run(api.myAPI(bot,db), host="0.0.0.0", port=8000)
+    # uvicorn.run(api.myAPI(bot,db), host="192.168.0.23", port=8000)
 
 # Create threads for Discord bot and FastAPI app
 discord_thread = threading.Thread(target=run_discord_bot)

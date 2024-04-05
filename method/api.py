@@ -1,18 +1,47 @@
 # api.py
 from fastapi import FastAPI
-
+import requests
 import config
 
-import discord
+import discord 
 # from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI,Depends,Request,HTTPException
+from fastapi import FastAPI,Depends,Request,HTTPException,Response
 from starlette.responses import RedirectResponse
 from fastapi.security import APIKeyHeader
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+
+CLIENT_ID = config.CLIENT_ID
+CLIENT_SECRET = config.CLIENT_SECRET
+REDIRECT_URL =  config.REDIRECT_URL
+LOGIN_URL = config.LOGIN_URL
 
 def myAPI(bot,db):
   print("API started")
   # ---------------------api------------------------
   app = FastAPI()
+  origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:5173",
+    "http://127.0.0.1:30000",
+    "https://erp.techtonions.com",
+    "https://oms.techtonions.com",
+    "https://accounts.techtonions.com",
+    "https://techtonions.com",
+    "https://www.techtonions.com",
+    "https://techtonions.com",
+    "https://www.techtonions.com"
+  ]
+  app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
   API_KEY = config.API_KEY
   # Create an instance of the APIKeyHeader security scheme
   api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
@@ -28,6 +57,80 @@ def myAPI(bot,db):
   async def redirect_to_docs():
       response = RedirectResponse(url='/docs')
       return response
+    
+  # ------------------------------------------------------------
+  
+  class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str
+  class User(BaseModel):
+    id: int
+    username: str
+    
+  # ------------------------------------------------------------
+  @app.get("/user/me")
+  async def read_user(request: Request):
+      return request.state.user
+
+  @app.get("/login")
+  async def login():
+        return RedirectResponse(url=config.LOGIN_URL)
+      
+  @app.get("/typer")
+  async def redirect_typer():
+        return RedirectResponse("https://typer.tiangolo.com")
+    
+  @app.get("/callback/")
+  async def callback(code: str):
+        # print('code:-',code)
+        if not code:
+          # print('code not provided')
+          raise HTTPException(status_code=400, detail="Code not provided")
+
+        data = {
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": REDIRECT_URL,
+        }
+        # print('data:-',data)
+
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept-Encoding": "application/x-www-form-urlencoded",
+        }
+
+        response = requests.post(
+            "https://discord.com/api/oauth2/token", data=data, headers=headers)
+        print("dicord api response:",response.status_code)
+        response.raise_for_status()
+
+        token_response = TokenResponse(**response.json())
+        # print(token_response)
+
+        # Store token in local storage
+        # This part cannot be directly implemented in FastAPI as it's a server-side framework.
+        # You can send the token back to the client and store it in the browser's local storage using JavaScript.
+
+        # Fetch user
+        user_response = requests.get("https://discord.com/api/users/@me", headers={
+                                     "Authorization": f"Bearer {token_response.access_token}"})
+        user_response.raise_for_status()
+        user_data = user_response.json()
+
+        # Fetch Guilds
+        guilds_response = requests.get("https://discord.com/api/users/@me/guilds", headers={
+                                       "Authorization": f"Bearer {token_response.access_token}"})
+        guilds_response.raise_for_status()
+        guilds_data = guilds_response.json()
+
+        guilds = [
+            guild for guild in guilds_data if guild["permissions"] == 2147483647] 
+        
+        data = {"user": user_data, "guilds": guilds}
+        return data
+
     
   # ------------------------------------------------------------
   # List of server 
