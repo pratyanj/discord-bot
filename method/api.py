@@ -17,23 +17,14 @@ REDIRECT_URL =  config.REDIRECT_URL
 LOGIN_URL = config.LOGIN_URL
 
 def myAPI(bot,db):
-  print("API started")
+  # print("API started")
   # ---------------------api------------------------
   app = FastAPI()
   origins = [
-    "http://localhost.tiangolo.com",
-    "https://localhost.tiangolo.com",
     "http://localhost",
     "http://localhost:8080",
     "http://localhost:5173",
     "http://127.0.0.1:30000",
-    "https://erp.techtonions.com",
-    "https://oms.techtonions.com",
-    "https://accounts.techtonions.com",
-    "https://techtonions.com",
-    "https://www.techtonions.com",
-    "https://techtonions.com",
-    "https://www.techtonions.com"
   ]
   app.add_middleware(
     CORSMiddleware,
@@ -68,18 +59,23 @@ def myAPI(bot,db):
     username: str
     
   # ------------------------------------------------------------
-  @app.get("/user/me")
-  async def read_user(request: Request):
-      return request.state.user
+  @app.get("/available_users")
+  async def available_users(user_id:int):
+    try:
+      try:
+        user = db.collection("dashboard_user").document(str(user_id)).get()
+        return user.to_dict()
+      except:
+        raise HTTPException(status_code=401, detail="User not found")
+    except Exception as e:
+      print("Error in database connection:",e)
+      return {"error":str(e)}
+    
 
   @app.get("/login")
   async def login():
         return RedirectResponse(url=config.LOGIN_URL)
-      
-  @app.get("/typer")
-  async def redirect_typer():
-        return RedirectResponse("https://typer.tiangolo.com")
-    
+       
   @app.get("/callback/")
   async def callback(code: str):
         # print('code:-',code)
@@ -129,6 +125,12 @@ def myAPI(bot,db):
             guild for guild in guilds_data if guild["permissions"] == 2147483647] 
         
         data = {"user": user_data, "guilds": guilds}
+        try:
+          database = db.collection("dashboard_user")
+          database.document(str(user_data["id"])).set(data)
+        except Exception as e:
+          print("Error in database connection:",e)
+        
         return data
 
     
