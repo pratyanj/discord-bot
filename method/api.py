@@ -140,7 +140,7 @@ def myAPI(bot,db):
 
   @app.get("/server_List/")
   async def server_List():
-    servers = {}
+    servers = {"ServerList":[]}
     for guild in bot.guilds:
       # print(guild.id)
       # servers[guild.name] = guild.id
@@ -149,7 +149,8 @@ def myAPI(bot,db):
               "id": str(guild.id),
               "icon_url": str(guild.icon)
           }
-      servers[guild.name] = server_info
+      servers["ServerList"].append(server_info)
+      # servers[guild.name] = server_info
       # print(servers)
     return servers
   # List of channenels according to server id
@@ -180,28 +181,29 @@ def myAPI(bot,db):
   @app.get("/GET_status/")
   async def GET_status(guild:int):
     Guild = bot.get_guild(guild)
+    gulid_db = db.collection("servers").document(str(guild))
     if Guild:
-      Welcome = db.collection("servers").document(str(guild)).collection("Welcome_Leave").document("welcome").get()
+      Welcome = gulid_db.collection("Welcome_Leave").document("welcome").get()
       Welcome_status = Welcome.to_dict()['status']
       print("Welcome_status:",Welcome_status)
-      Leave = db.collection("servers").document(str(guild)).collection("Welcome_Leave").document("leave").get()
+      Leave = gulid_db.collection("Welcome_Leave").document("leave").get()
       Leave_status = Leave.to_dict()['status']
       print("Leave_status:",Leave_status)
-      Join_Member_Role = db.collection("servers").document(str(guild)).collection("moderation").document("Join_Member_Role").get()
+      Join_Member_Role = gulid_db.collection("moderation").document("Join_Member_Role").get()
       Join_Member_Role_status = Join_Member_Role.to_dict()['status']
       print("Join_Member_Role_status:",Join_Member_Role_status)
-      image_share = db.collection("servers").document(str(guild)).collection("moderation").document("image_share").get()
+      image_share = gulid_db.collection("moderation").document("image_Only").get()
       image_share_status = image_share.to_dict()['status']
       print("IMG_Only_status:",image_share_status)
-      link_share = db.collection("servers").document(str(guild)).collection("moderation").document("link_share").get()
+      link_share =gulid_db.collection("moderation").document("link_Only").get()
       link_share_status = link_share.to_dict()['status']
       print("Link_Only_status:",link_share_status)
-      member_count = db.collection("servers").document(str(guild)).collection("moderation").document("member_count").get()
+      member_count = gulid_db.collection("moderation").document("member_count").get()
       member_count_status = member_count.to_dict()['status']
       print("Memeber_Count_status:",member_count_status)
-      Levels = db.collection("servers").document(str(guild)).collection("Levels").document("levelsetting").get()
+      Levels = gulid_db.collection("Levels").document("levelsetting").get()
       Levels_status = Levels.to_dict()['status']
-      youtube_notification = db.collection("servers").document(str(guild)).collection("moderation").document("Youtube_Notification").get()
+      youtube_notification = gulid_db.collection("moderation").document("Youtube_Notification").get()
       youtube_notification_status = youtube_notification.to_dict()['status']
       
       print("Levels_status:",Levels_status)
@@ -224,13 +226,23 @@ def myAPI(bot,db):
       
       
   # ---------------------------POST METOD---------------------------------
-
+  # ------------------------WELCOME_LEAVE------------------------
   # @app.post("/welcome_message/",dependencies=[Depends(check_api_key)])
   @app.post("/welcome_message/")
   async def welcome_message(guild:int,message:str):
     Guild = bot.get_guild(guild)
     if Guild:
       doc_ref = db.collection("servers").document(str(guild)).collection("Welcome_Leave").document("welcome")
+      doc_ref.update({'message': message})
+      return {"message": message}
+    else:
+      return f"{guild} is not a valid server id"
+    
+  @app.post("/leave_message/")
+  async def leave_message(guild:int,message:str):
+    Guild = bot.get_guild(guild)
+    if Guild:
+      doc_ref = db.collection("servers").document(str(guild)).collection("Welcome_Leave").document("leave")
       doc_ref.update({'message': message})
       return {"message": message}
     else:
@@ -244,11 +256,39 @@ def myAPI(bot,db):
       for chann in Guild.channels:
         if chann.id == channel:
           doc_ref = db.collection("servers").document(str(guild)).collection("Welcome_Leave").document("welcome")
-          doc_ref.update({'channel_id': str(chann.id)})
-          doc_ref.update({'channel_name': chann.name})
-      return {"message": f"Welcome channel set to {chann.name} ({chann.id})"}
+          data = {
+            "channel_id": str(chann.id),
+            "channel_name": chann.name,
+            "status":True,
+            "message":doc_ref.get().to_dict()['message']
+          }          
+          doc_ref.update(data)
+          
+        return {"message": f"Welcome channel set to {chann.name} ({chann.id})"}
     else:
       return f"{guild} is not a valid server id"
+    
+  @app.post("/leave_channel_set/")
+  async def leave_channel_set(guild:int,channel:int):
+    Guild = bot.get_guild(guild)
+    if Guild:
+      for chann in Guild.channels:
+        if chann.id == channel:
+          doc_ref = db.collection("servers").document(str(guild)).collection("Welcome_Leave").document("leave")
+          data = {
+            "channel_id": str(chann.id),
+            "channel_name": chann.name,
+            "status":True,
+            "message":doc_ref.get().to_dict()['message']
+          }
+          doc_ref.update(data)
+        return {"message": f"Leave channel set to {chann.name} ({chann.id})"}
+    else:
+      return f"{guild} is not a valid server id"
+
+  
+    
+  # ------------------------WELCOME_LEAVE------------------------
   #join member role
   @app.post("/join_member_role/")
   async def join_member_role(guild:int, channel:int,role:int):
