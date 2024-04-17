@@ -2,7 +2,7 @@
 import discord
 
 # print("welcomeleave.py")
-async def welcome(member,bot,db):
+async def welcome(member,db):
     server = db.collection("servers").document(str(member.guild.id))
     if not server.get().exists:
         print(f"Server {member.guild.name} not found in database.")
@@ -54,9 +54,7 @@ async def Goodbye(member, db):
         leave_channel_id = channel.to_dict()['channel_id']
         
     if channel.to_dict()["message"] == '':
-        print("leave message not set, using default")
         message = f"Goodbye, {member.name}! We will miss you."
-        return
     else:
         message = channel.to_dict()["message"]
 

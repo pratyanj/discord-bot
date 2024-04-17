@@ -65,23 +65,19 @@ async def level_on_message(message,db):
         level += 1
         user.update({"level":level})
         user.update({"xp":0})
-        if sysdoc.to_dict()["message"] == '':
-            msg = f"{author.mention} leveled up to {level}"
-        else:
-            message_template = str(sysdoc.to_dict()["message"])
-            # Use str.format() to substitute placeholders
-            msg = message_template.format(user=author.mention, level=level)
-            # print('msg:',msg)
-        # if sysdoc.to_dict()["lvlreq"] == level:
-        #     role_id = sysdoc.to_dict()["role_id"]
-        #     role = guild.get_role(role_id)
-        #     try:
-        #         await author.add_roles(role)
-        #         await message.channel.send(f'🏆{author.mention} has just level upto **{level}** and reworded with {role.name}✨')
-        #     except discord.HTTPException:
-        #         await message.channel.send(f'{author.mention} I couldn\'t add the role {role.name} to you.')
+        msg = f"{author.mention} leveled up to {level}"
+        print('msg:',msg)
+        dataa = sysdoc.to_dict()["role_set"]
+        lvl = list(dataa.keys())
+        role_id = list(dataa.values())
+        print("role:",role_id)
+        print("lvl:",lvl)
+        if int(lvl[0]) == level:
+            role = guild.get_role(int(role_id[0]))
+            try:
+                await author.add_roles(role)
+                await message.channel.send(f'🏆{author.mention} has just level upto **{level}** and reworded with {role.name}✨')
+                return
+            except discord.HTTPException:
+                await message.channel.send(f'{author.mention} I couldn\'t add the role {role.name} to you.')
         await message.channel.send(f'{msg}')
-    
-
-            
-            
