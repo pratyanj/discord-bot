@@ -37,6 +37,19 @@ async def welcome(member,db):
         color=discord.Colour.from_rgb(0, 96, 154))
     await welcome_channel.send(embed=welcome_message)
 
+async def join_role(member,bot,db):
+    
+    join_role_id = db.collection("servers").document(str(member.guild.id)).collection("moderation").document("Join_Member_Role")
+    if not join_role_id.get().exists:
+        print("Not data found in database for join role")
+        return
+    join_role_id = int(join_role_id.get().to_dict()['role_id'])
+    role = discord.utils.get(member.guild.roles, id=join_role_id)
+    if role is None:
+        print("Role not found in server")
+        return
+    await member.add_roles(role)
+
 
 async def Goodbye(member, db):
     server = db.collection("servers").document(str(member.guild.id))

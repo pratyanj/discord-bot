@@ -40,6 +40,7 @@ bot = commands.Bot(command_prefix='$' ,intents=discord.Intents.all())
 @bot.event
 async def on_member_join(member:discord.member):
     await welcomeleave.welcome(member,bot,db)
+    await welcomeleave.join_role(member,bot,db)
 # If member leave server
 @bot.event 
 async def on_member_remove(member:discord.member):
