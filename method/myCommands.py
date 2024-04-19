@@ -57,19 +57,40 @@ async def clear(ctx, amount: int):
 #             await interaction.response.send_message('I do not have the required permissions to manage messages.')
 #     else:
 #         await interaction.response.send_message('You do not have the "Manage Messages" permission.')
-async def code(ctx):
-    print(ctx.channel.id)
-    channel = ctx.channel.id
-    print("Code detected")
-    await ctx.message.delete()
-    code = f"""{ctx.message.content}"""
-    print("Code sent")
-    if channel == 1201431015613272084:
-        await ctx.send(f'```python\n{code[5:]}\n```')
-    elif channel == 1201431115295105085:
-        await ctx.send(f'```javascript\n{code[5:]}\n```')
-    else:
-        await ctx.send(f'```python\n{code[6:]}\n```') 
+
+async def setleavechannel(ctx,db,leave_channel:discord.TextChannel):
+  Guild =ctx.guild
+  channel=leave_channel
+  if Guild:
+      for chann in Guild.channels:
+        if chann.id == channel:
+          doc_ref = db.collection("servers").document(str(Guild.id)).collection("Welcome_Leave").document("leave")
+          data = {
+            "channel_id": str(chann.id),
+            "channel_name": chann.name,
+            "status":True,
+            "message":doc_ref.get().to_dict()['message']
+          }
+          doc_ref.update(data)
+        return {"message": f"Leave channel set to {chann.name} ({chann.id})"}
+    
+async def setwelcomechannel(ctx,db,welcome_channel:discord.TextChannel):
+  Guild =ctx.guild
+  channel=welcome_channel
+  if Guild:
+      for chann in Guild.channels:
+        if chann.id == channel:
+          doc_ref = db.collection("servers").document(str(Guild.id)).collection("Welcome_Leave").document("leave")
+          data = {
+            "channel_id": str(chann.id),
+            "channel_name": chann.name,
+            "status":True,
+            "message":doc_ref.get().to_dict()['message']
+          }
+          doc_ref.update(data)
+        return {"message": f"Leave channel set to {chann.name} ({chann.id})"}
+  else:
+    return f"{Guild} is not a valid server id"
 # ----------lvl system----------
 async def level(ctx,member,db):
     if member is None:
@@ -231,8 +252,8 @@ async def setrole(ctx,db,role,level):
 async def create_category(ctx,db,category_name):
     
     server_doc = db.collection("servers").document(str(ctx.guild.id)).collection("moderatio")
-    imgl_channel_list = server_doc.document("image_share")
-    link_channel_list = server_doc.document("link_share")
+    imgl_channel_list = server_doc.document("image_Only")
+    link_channel_list = server_doc.document("link_Only")
     guild = ctx.guild
     role = await guild.create_role(name=category_name, mentionable=True)
     overwrites = {
@@ -255,16 +276,40 @@ async def create_category(ctx,db,category_name):
     await guild.create_text_channel(f'{category_name}_chat',overwrites=overwrites ,category=category)
 
     # Append channel name and id to link_channel_list
-    link_channel_list.set({link.name: link.id},merge=True,)
+    link_channel_list.set({"channel_id":{link.name: link.id}},merge=True,)
 
     # Append channel name and id to imgl_channel_list
-    imgl_channel_list.set({img.name: img.id},merge=True)
+    imgl_channel_list.set({"channel_id":{img.name: img.id}},merge=True)
     
     await ctx.send(f'Category "{category_name}" . Role assigned.')
 
 
+async def setup_member_count(ctx,db):
+    server_doc = db.collection("servers").document(str(ctx.guild.id)).collection("moderatio")
+    counter_channel_list = server_doc.document("member_count")
+    guild = ctx.guild
     
-    
+    overwrites = {
+        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        guild.me: discord.PermissionOverwrite(read_messages=True),
+    }
+    category_name = f"📊SERVER STATS"
+    # Create the category
+    category =await guild.create_category(category_name ,overwrites=overwrites)
+    # create memeber count channel
+    member_count = await guild.create_voice_channel('😁Total Members', overwrites=overwrites ,category =category)
+    Online_member_count = await guild.create_voice_channel('😎Online Members', overwrites=overwrites ,category =category)
+    bot_count = await guild.create_voice_channel('🤖Bots', overwrites=overwrites ,category =category)
+    data = {
+        "status":True,
+        f"📊SERVER STATS":{
+            "😁Total Members":f'{member_count.id}',
+            "😎Online Members":f"{Online_member_count.id}",
+            "🤖Bots":f"{bot_count.id}",
+        }
+    }
+    counter_channel_list.set(data,merge=True)
+    await ctx.send(f'Your server has been setup with server stats')
         
         
          

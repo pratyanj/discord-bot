@@ -10,19 +10,23 @@ async def TO_member(payload,db):
   server = db.collection("servers").document(guild_id).collection("moderation").document("Join_Member_Role") 
   sevrer_data = server.get()
   print(sevrer_data.to_dict())
-  if sevrer_data.to_dict()["status"]  == False or "false":
+  if sevrer_data.to_dict()["status"]  == False :
     print("Role adding system is off")
     return
-  if sevrer_data.to_dict()["channel_id"] or sevrer_data.to_dict()["role_id"] == '':
-    print('Channel ID or Role ID not configured. Returning.')
+  print(sevrer_data.to_dict())
+  if sevrer_data.to_dict()["channel_id"] == '':
+    print('Channel ID not configured. Returning.')
     return 
+  if sevrer_data.to_dict()["role_id"] == '':
+    print('Role ID not configured. Returning.')
+    return
   rule_channel_id = sevrer_data.to_dict()['channel_id']
   role_id = sevrer_data.to_dict()['role_id']
   print(payload.channel_id)
   print(rule_channel_id)
-  if payload.channel_id == rule_channel_id:
+  if int(payload.channel_id) == int(rule_channel_id):
     # Replace 'YOUR_ROLE_ID' with the actual ID of the role to give
-    role_id = role_id
+    role_id = int(role_id)
     role = discord.utils.get(payload.member.guild.roles, id=role_id)
 
     print(f'Role: {role}')

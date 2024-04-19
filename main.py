@@ -36,9 +36,11 @@ bot = commands.Bot(command_prefix='$' ,intents=discord.Intents.all())
 # ---------------------------DISCORD BOT SETTINGS---------------------------------
 # --------------------------------------------------------------------------------
 
+# ----------------------Bot Join /Leave Events Completed----------------------
 @bot.event
 async def on_member_join(member:discord.member):
-    await welcomeleave.welcome(member, db)
+    await welcomeleave.welcome(member,db)
+    await welcomeleave.join_role(member,bot,db)
 # If member leave server
 @bot.event 
 async def on_member_remove(member:discord.member):
@@ -47,9 +49,28 @@ async def on_member_remove(member:discord.member):
 # Set the default prefix for a new server
 @bot.event
 async def on_guild_join(guild):
+  category_name = "Bot-Config"
+  role = await guild.create_role(name="TO-BOT", mentionable=True)
+  overwrites = {
+        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        guild.me: discord.PermissionOverwrite(read_messages=True),
+        role: discord.PermissionOverwrite(read_messages=True)
+    }
+    
+  # Create the category
+  category =await guild.create_category(category_name ,overwrites=overwrites)
+
+  # Create the role with the same name as the category
+  # Assign the role to the member who executed the command
+  await guild.create_role(role)
+  # Create help channels within the newly created category
+  log = await guild.create_text_channel(f'Bot-logs', overwrites=overwrites ,category =category)
+  setup = await guild.create_text_channel(f'Bot-setup', overwrites=overwrites,category=category)
+
   data = {
     "name":guild.name,
-    "prefix":"$"
+    "prefix":"$",
+    "Log_channel_id":f"{log.id}",
   }
   db.collection("servers").document(str(guild.id)).set(data)
   welcome = {
@@ -71,12 +92,16 @@ async def on_guild_join(guild):
   }
   db.collection("servers").document(str(guild.id)).collection("Levels").document("levelsetting").set(lvlsys)
   db.collection("servers").document(str(guild.id)).collection("Levels").document("user_lvl")
-  db.collection("servers").document(str(guild.id)).collection("moderation").document("image_share").set({"status":False,"channel_id":{}})
-  db.collection("servers").document(str(guild.id)).collection("moderation").document("link_share").set({"status":False,"channel_id":{}})
-  db.collection("servers").document(str(guild.id)).collection("moderation").document("member_count").set({"status":False,"channel_id":'',"channel_name":""})
+  db.collection("servers").document(str(guild.id)).collection("moderation").document("image_Only").set({"status":False,"channel_id":{}})
+  db.collection("servers").document(str(guild.id)).collection("moderation").document("link_Only").set({"status":False,"channel_id":{}})
+  db.collection("servers").document(str(guild.id)).collection("moderation").document("member_count").set({"status":False})
   db.collection("servers").document(str(guild.id)).collection("moderation").document("Join_Member_Role").set({"status":False,"channel_id":'','channel_name':"",'role_id':"",'role_name':""})
   db.collection("servers").document(str(guild.id)).collection("moderation").document("Youtube_Notification").set({"status":False,"channel_id":'',"channel_name":"","youtube_channels":[],"videos":{}})
-  
+
+@bot.event
+async def on_guild_remove(guild):
+   await db.collection("servers").document(str(guild.id)).delete()
+# ----------------------Bot Join /Leave Events Completed----------------------
 @bot.event
 async def on_message(message):
     if not message.author.bot:
@@ -84,8 +109,8 @@ async def on_message(message):
       print("User:",message.author)
       print("Message:\n",message.content)
       print("--------------------------------------------------------")
-    await image_channel.del_msg(message, monitored_channel_ids, bot)
-    await link_channel.del_link_msg(message,link_channel_list,bot)
+    await image_channel.del_msg(message, db, bot)
+    await link_channel.del_link_msg(message,db,bot)
     await levelmain.level_on_message(message,db)
     
 @bot.event
@@ -94,6 +119,7 @@ async def on_raw_reaction_add(payload):
 # ------------------------------------------------------------------------------------
 #                              My all command
 # ------------------------------------------------------------------------------------
+# @bot.tree.command(name='clear',description='The number of messages to delete.')
 @bot.command(name='clear',help='The number of messages to delete.')
 async def clear(ctx, amount: int):
   await myCommands.clear(ctx, amount)
@@ -103,16 +129,22 @@ async def clear_error(self, ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         await ctx.send(f'This command is on cooldown. Please try again in {round(error.retry_after, 2)} seconds.')
         
-@bot.command(name="Check permissions",help="Check bot permissions")
+@bot.command(name="Check",help="Check bot permissions")
 async def check_bot_permissions(ctx):
   await myCommands.check_bot_permissions(ctx)
+  
 @bot.command(name="lvl", help="Check your level")
 async def lvl(ctx):
     print(ctx.author)
     await myCommands.level(ctx,ctx.author,db)
+
 @bot.command(name='code', help='Send a code block')
 async def send_code(ctx):
     await myCommands.code(ctx)
+
+@bot.command(name="status_setup",help="Add memeber to your server")
+async def server_setup(ctx):
+  await myCommands.setup_member_count(ctx,db)
 # ----------lvl system----------
 @bot.group()
 async def lvlsys(ctx):
@@ -142,25 +174,12 @@ async def add_join_role(ctx,channel:discord.channel,role:discord.role):
 # ------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------
 @bot.command(name='setwelcomechannel', help='Set the welcome channel.')
-async def setwelcomechannel(ctx,welcome_channel:discord.TextChannel):
-  db.collection("servers").document(ctx.guild.id).collection("Welcome_Leave").document("welcome")
-  
-  channel_set = db.collection("channel_id").document("welcome_channel_id")
-  channel_get = channel_set.get()
-  welcome_channel_id = next(iter(channel_get.to_dict().values()), None)
-  channel_set.set({welcome_channel.name:welcome_channel.id})
-  print('welcome_channel_id:',welcome_channel_id)
-  print('welcome_channel_name:',welcome_channel_id)
-  await ctx.send(f'Welcome channel set to {welcome_channel.name}')
+async def set_welcomechannel(ctx,welcome_channel:discord.TextChannel):
+  await myCommands.setwelcomechannel(ctx,db,welcome_channel)
   
 @bot.command(name='setleavechannel', help='Set the leave channel.')
-async def setleavechannel(ctx,leave_channel:discord.TextChannel):
-  channel_set = db.collection("channel_id").document("leave_channel_id")
-  channel_get = channel_set.get()
-  welcome_channel_id = channel_get.to_dict()
-  print('leave_channel_id:',welcome_channel_id)
-  channel_set.set({leave_channel.name:leave_channel.id})
-  await ctx.send(f'Welcome channel set to {leave_channel.name}')
+async def set_leavechannel(ctx,leave_channel:discord.TextChannel):
+  await myCommands.setleavechannel(ctx,db,leave_channel)
   
 # Set the custom prefix for the server
 @bot.command(name='setprefix', help='Set the prefix for this server.')
@@ -189,30 +208,33 @@ async def get_prefix(bot, message):
       return doc.to_dict()["prefix"]
     else:
       return default_prefix
+# ------------------------------Bot all task------------------------------------------------------
 
 @tasks.loop(minutes=10)
 async def updateMemberCount():
-    await all_task.updateMemberCount(bot, server_id, member_count_channel_id)
+  for guild in bot.guilds:
+    memberCount = db.collection("servers").document(str(guild.id)).collection("moderation").document("member_count").get()
+    if memberCount.exists:
+      memberCount_status = memberCount.to_dict()['status']
+      if memberCount_status == True:
+        member_count_channel_id = memberCount.to_dict()['📊SERVER STATS']
+        await all_task.updateMemberCount(bot, guild.id, member_count_channel_id)
 
 @tasks.loop(minutes=10)
 async def youtube():
   for guild in bot.guilds:
-      # print(guild.name)
-      # print(guild.id)
-      # print(guild.icon)
       youtube_notification = db.collection("servers").document(str(guild.id)).collection("moderation").document("Youtube_Notification").get()
       if youtube_notification.exists:
         youtube_notification_status = youtube_notification.to_dict()['status']
         if youtube_notification_status == True:
-          
           await all_task.youtube(bot,db,guild.id)
-    
+# ------------------------------------------------------------------------------------ 
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user.name} ({bot.user.id})')
     print('--------------------------------------------------------')
     
-    updateMemberCount.start()
+    # updateMemberCount.start()
     youtube.start()
   
 bot.command_prefix = get_prefix
