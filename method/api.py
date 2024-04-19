@@ -239,13 +239,13 @@ def myAPI(bot,db):
   #     # 
   
   @app.post("/change_prefix")
-  async def change_prefix(ctx, new_prefix):
-    prefix = db.collection("servers").document(int(ctx.guild.id))
+  async def change_prefix(guild, new_prefix):
+    prefix = db.collection("servers").document(str(guild))
     if prefix.get().exists:
       prefix.update({"prefix": new_prefix})
       return  {"message": f"Prefix changed to {new_prefix}"}
     else:
-      return HTTPException(status_code=404, detail=f"{ctx.guild.id} not found in database")
+      return HTTPException(status_code=404, detail=f"{guild} not found in database")
   
   @app.post("/add_link_chhannel")
   async def add_link_chhannel(guild:int, channel_id:int,):
@@ -269,6 +269,7 @@ def myAPI(bot,db):
   @app.get("/GET_status/")
   async def GET_status(guild:int):
     Guild = bot.get_guild(guild)
+    print("Guild:",Guild)
     gulid_db = db.collection("servers").document(str(guild))
     if Guild:
       Welcome = gulid_db.collection("Welcome_Leave").document("welcome").get()
@@ -303,7 +304,7 @@ def myAPI(bot,db):
       
       print("Levels_status:",Levels_status)
       
-      data = {
+      data = [{
         "img_only_status": image_share_status,
         "link_only_status": link_share_status,
         "memeber_count_status": member_count_status,
@@ -312,7 +313,7 @@ def myAPI(bot,db):
         "levelsetting_status": Levels_status,
         "join_member_role_status": Join_Member_Role_status,
         "youtube_notification_status": youtube_notification_status,
-      }
+      }]
       return data
     else:
       return f"{guild} is not a valid server id"
@@ -425,7 +426,11 @@ def myAPI(bot,db):
   async def link_channel_switch(guild:int,status:bool):
     Guild = bot.get_guild(guild)
     if Guild:
-      doc_ref = db.collection("servers").document(str(guild)).collection("moderation").document("Link_Only")
+      try:
+        doc_ref = db.collection("servers").document(str(guild)).collection("moderation").document("Link_Only")
+      except:
+        doc_ref = db.collection("servers").document(str(guild)).collection("moderation").document("Link_share")
+      
       doc_ref.update({'status': status})
       return {"status": status}
     else:
@@ -437,10 +442,14 @@ def myAPI(bot,db):
     Guild = bot.get_guild(guild)
     if Guild:
       doc_ref = db.collection("servers").document(str(guild)).collection("moderation").document("image_share")
-      doc_ref.update({'status': status})
-      return {"status": status}
+      if doc_ref.get().exists:
+        doc_ref.update({'status': status})
+        return {"status": status}
+      else:
+        print("database not found")
+        return HTTPException(status_code=404, detail="database not found")
     else:
-      return f"{guild} is not a valid server id"
+      return HTTPException(status_code=404, detail=f"{guild} is not a valid server id")
   
   # server welcome message
   # @app.post("/welcome_status/",dependencies=[Depends(check_api_key)])
@@ -448,11 +457,15 @@ def myAPI(bot,db):
   async def welcome_status(guild:int,status:bool):
     Guild = bot.get_guild(guild)
     if Guild:
-      doc_ref = db.collection("servers").document(str(guild)).collection("Welcome_Leave").document("welcome")
-      doc_ref.update({'status': status})
-      return {"status": status}
+      doc_ref = db.collection("servers").document(str(guild.id)).collection("Welcome_Leave").document("welcome")
+      print(doc_ref.get().to_dict())
+      if doc_ref.get().exists:
+        doc_ref.update({'status': status})
+        return {"status": status}
+      else:
+        return HTTPException(status_code=404, detail="database not found")
     else:
-      return f"{guild} is not a valid server id"
+      return HTTPException(status_code=404, detail=f"{guild} is not a valid server id")
     
   @app.post("/leave_status/")
   async def leave_status(guild:int,status:bool):

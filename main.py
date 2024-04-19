@@ -39,7 +39,7 @@ bot = commands.Bot(command_prefix='$' ,intents=discord.Intents.all())
 # ----------------------Bot Join /Leave Events Completed----------------------
 @bot.event
 async def on_member_join(member:discord.member):
-    await welcomeleave.welcome(member,bot,db)
+    await welcomeleave.welcome(member,db)
     await welcomeleave.join_role(member,bot,db)
 # If member leave server
 @bot.event 
@@ -109,8 +109,8 @@ async def on_message(message):
       print("User:",message.author)
       print("Message:\n",message.content)
       print("--------------------------------------------------------")
-    await image_channel.del_msg(message, monitored_channel_ids, bot)
-    await link_channel.del_link_msg(message,link_channel_list,bot)
+    await image_channel.del_msg(message, db, bot)
+    await link_channel.del_link_msg(message,db,bot)
     await levelmain.level_on_message(message,db)
     
 @bot.event
