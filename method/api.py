@@ -457,7 +457,7 @@ def myAPI(bot,db):
   async def welcome_status(guild:int,status:bool):
     Guild = bot.get_guild(guild)
     if Guild:
-      doc_ref = db.collection("servers").document(str(guild.id)).collection("Welcome_Leave").document("welcome")
+      doc_ref = db.collection("servers").document(str(guild)).collection("Welcome_Leave").document("welcome")
       print(doc_ref.get().to_dict())
       if doc_ref.get().exists:
         doc_ref.update({'status': status})
