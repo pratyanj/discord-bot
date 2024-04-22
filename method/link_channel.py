@@ -3,6 +3,7 @@ import asyncio
 
 # print("Link_channel.py")
 async def del_link_msg(message, db, bot):
+    Guild = bot.get_guild(message.guild.id)
     database = db.collection("servers").document(str(message.guild.id)).collection("moderation").document("image_Only")
     if database.get().exists:
         print(database.get().to_dict()["channel_id"])
@@ -28,6 +29,8 @@ async def del_link_msg(message, db, bot):
                 # Check if the bot is not the author before attempting to delete
                 if warning.author == bot.user:
                     await warning.delete()
+                    
+                
     else:
         print("Message without a valid link")
 
