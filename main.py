@@ -8,6 +8,7 @@ import aiosqlite
 import config 
 
 # firebasre (database)
+import sqlite3
 import firebase_admin
 from firebase_admin import credentials,firestore
 
@@ -67,6 +68,7 @@ async def on_guild_join(guild):
   log = await guild.create_text_channel(f'Bot-logs', overwrites=overwrites ,category =category)
   setup = await guild.create_text_channel(f'Bot-setup', overwrites=overwrites,category=category)
 
+  # ---------------firebase database-------------
   data = {
     "name":guild.name,
     "prefix":"$",
@@ -98,6 +100,22 @@ async def on_guild_join(guild):
   db.collection("servers").document(str(guild.id)).collection("moderation").document("Join_Member_Role").set({"status":False,"channel_id":'','channel_name':"",'role_id':"",'role_name':""})
   db.collection("servers").document(str(guild.id)).collection("moderation").document("Youtube_Notification").set({"status":False,"channel_id":'',"channel_name":"","youtube_channels":[],"videos":{}})
 
+  # ---------------firebase database-------------
+  # database = sqlite3.connect("database/database.db")
+  # try:
+  #   database.execute("INSERT INTO servers(name,prefix,Log_channel_id) VALUES(?,?,?)",(guild.name,"$",log.id))
+  # except:
+  #   database.execute("CREATE TABLE IF NOT EXISTS servers(id INTEGER PRIMARY KEY, name TEXT, prefix TEXT, Log_channel_id INTEGER)")
+  #   database.execute("INSERT INTO servers(name,prefix,Log_channel_id) VALUES(?,?,?)",(guild.name,"$",log.id))
+  # try:
+  #   database.execute("INSERT INTO goodbye(server_id,channel_id,channel_name,message) VALUEs(?,?,?,?)",(guild.id,None,None,None)) 
+  #   database.execute("INSERT INTO welcome(server_id,channel_id,channel_name,message) VALUES(?,?,?,?)",(guild.id,None,None,None))
+  # except:
+  #   database.execute("INSERT INTO welcome(server_id,channel_id,channel_name,message) VALUES(?,?,?,?,?,?)",(guild.id,None,None,None))
+  #   database.execute("INSERT INTO goodbye(server_id,channel_id,channel_name,message) VALUEs(?,?,?,?)",(guild.id,None,None,None)) 
+  #   database.execute("CREATE TABLE IF NOT EXISTS welcome(id INTEGER PRIMARY KEY, server_id INTEGER, channel_id INTEGER, channel_name TEXT, message TEXT)")
+  #   database.execute("CREATE TABLE IF NOT EXISTS goodbye(id INTEGER PRIMARY KEY, server_id INTEGER, channel_id INTEGER, channel_name TEXT, message TEXT)")
+  
 @bot.event
 async def on_guild_remove(guild):
    await db.collection("servers").document(str(guild.id)).delete()
