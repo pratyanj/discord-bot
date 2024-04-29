@@ -1,0 +1,170 @@
+// database
+datasource db {
+  provider = "sqlite"
+  url      = "file:D:/pratyanj laptop/python/discordbot/TO bot/mainBOT V2/database/BOT.sqlite"
+}
+// generator
+generator client {
+  provider             = "prisma-client-py"
+  recursive_type_depth = 5
+}
+
+// data models
+// model Post {
+//   id        Int     @id @default(autoincrement())
+//   title     String
+//   content   String?
+//   views     Int     @default(0)
+//   published Boolean @default(false)
+//   author    User?   @relation(fields: [author_id], references: [id])
+//   author_id Int?
+// }
+
+// model User {
+//   id    Int     @id @default(autoincrement())
+//   email String  @unique
+//   name  String?
+//   posts Post[]
+// }
+// Define the Server table
+model Server {
+  ID            Int    @id @default(autoincrement())
+  server_id     Int
+  server_name   String
+  prefix        String
+  log_channel   Int
+}
+
+
+// Define the Status table
+model Status {
+  ID                            Int     @id @default(autoincrement())
+  server_id                     Int     @unique
+  welcome                       Boolean @default(false)
+  JOIN_ROLE                     Boolean @default(false)
+  goodbye                       Boolean @default(false)
+  IMAGES_ONLY                   Boolean @default(false) 
+  LINKS_ONLY                    Boolean @default(false)
+  REACTION_VERIFICATION_ROLE    Boolean @default(false)
+  youtube_channel               Boolean @default(false)
+}
+
+// Define the LevelSetting table
+model LevelSetting {
+  ID                   Int    @id @default(autoincrement())
+  server_id            Int    @unique
+  level_up_channel_id  Int
+  level_up_channel_name String
+}
+
+// Define the NoXPChannel table
+model NoXPChannel {
+  ID           Int    @id @default(autoincrement())
+  server_id    Int
+  channel_id   Int
+  channel_name String
+}
+// Define the NoXPRole table
+model NoXPRole {
+  ID          Int    @id @default(autoincrement())
+  server_id   Int
+  role_id     Int
+  role_name   String
+}
+
+// Define the LevelRole table
+model LevelRole {
+  ID               Int    @id @default(autoincrement())
+  server_id        Int
+  level            Int
+  role_id          Int
+  role_name        String
+  level_up_message String
+}
+
+// Define the UsersLevel table
+model UsersLevel {
+  ID         Int    @id @default(autoincrement())
+  server_id  Int
+  user_id    Int
+  user_name  String
+  level      Int
+  xp         Int
+}
+
+// Define the Welcome table
+model Welcome {
+  ID           Int    @id @default(autoincrement())
+  server_id    Int    @unique
+  channel_id   Int
+  channel_name String
+  message      String
+}
+
+// Define the Goodbye table
+model Goodbye {
+  ID           Int    @id @default(autoincrement())
+  server_id    Int    @unique
+  channel_id   Int
+  channel_name String
+  message      String
+}
+
+// Define the JoinRole table
+model JoinRole {
+  ID          Int    @id @default(autoincrement())
+  server_id   Int    @unique
+  role_id     Int
+  role_name   String
+}
+
+// Define the ReactionVerificationRole table
+model ReactionVerificationRole {
+  ID             Int    @id @default(autoincrement())
+  server_id      Int    @unique
+  role_id        Int
+  role_name      String
+  reaction       String
+  channel_id     Int
+  channel_name   String
+  dm_message     String
+}
+
+// Define the ImagesOnly table
+model ImagesOnly {
+  ID           Int    @id @default(autoincrement())
+  server_id    Int
+  channel_id   Int
+  channel_name String
+}
+
+// Define the LinksOnly table
+model LinksOnly {
+  ID           Int    @id @default(autoincrement())
+  server_id    Int
+  channel_id   Int
+  channel_name String
+}
+
+// Define the YouTubeSetting table
+model YouTubeSetting {
+  ID           Int    @id @default(autoincrement())
+  server_id    Int    @unique
+  channel_id   Int
+  channel_name String
+}
+
+// Define the YouTubeSubChannel table
+model YouTubeSubChannel {
+  ID         Int    @id @default(autoincrement())
+  server_id  Int
+  channel    String
+}
+
+// Define the YouTubeVideos table
+model YouTubeVideos {
+  ID        Int    @id @default(autoincrement())
+  server_id Int
+  channel   String
+  video_id  String
+}
