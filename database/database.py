@@ -1,5 +1,7 @@
 import sqlite3
 
+
+#UPDATE {table_name} SET {youwant to change} = {input} WHERE {reference} = {input value} 
 class Database:
     def __init__(self, db_name:str):
         self.db_name = db_name

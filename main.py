@@ -108,6 +108,11 @@ async def on_guild_join(guild):
   #   database.execute("CREATE TABLE IF NOT EXISTS servers(id INTEGER PRIMARY KEY, name TEXT, prefix TEXT, Log_channel_id INTEGER)")
   #   database.execute("INSERT INTO servers(name,prefix,Log_channel_id) VALUES(?,?,?)",(guild.name,"$",log.id))
   # try:
+  #   database.execute("INSERT INTO STATUS (server_id,welcome,JOIN_ROLE,goodbye,IMAGES_ONLY,LINKS_ONLY,REACTION_VERIFICATION_ROLE,youtube_channel) value(?,?,?,?,?,?,?,?)",(guild.id,False,False,False,False,False,False,False))
+  # except:
+  #   database.execute("CREATE TABLE IF NOT EXISTS STATUS (id INTEGER PRIMARY KEY,server_id INTEGER ,welcome BOOLEAN, JOIN_ROLE BOOLEAN, goodbye BOOLEAN, IMAGES_ONLY BOOLEAN, LINKS_ONLY BOOLEAN, REACTION_VERIFICATION_ROLE BOOLEAN, youtube_channel BOOLEAN)")
+  #   database.execute("INSERT INTO STATUS (server_id,welcome,JOIN_ROLE,goodbye,IMAGES_ONLY,LINKS_ONLY,REACTION_VERIFICATION_ROLE,youtube_channel) value(?,?,?,?,?,?,?,?)",(guild.id,False,False,False,False,False,False,False))
+  # try:
   #   database.execute("INSERT INTO goodbye(server_id,channel_id,channel_name,message) VALUEs(?,?,?,?)",(guild.id,None,None,None)) 
   #   database.execute("INSERT INTO welcome(server_id,channel_id,channel_name,message) VALUES(?,?,?,?)",(guild.id,None,None,None))
   # except:
@@ -115,6 +120,29 @@ async def on_guild_join(guild):
   #   database.execute("INSERT INTO goodbye(server_id,channel_id,channel_name,message) VALUEs(?,?,?,?)",(guild.id,None,None,None)) 
   #   database.execute("CREATE TABLE IF NOT EXISTS welcome(id INTEGER PRIMARY KEY, server_id INTEGER, channel_id INTEGER, channel_name TEXT, message TEXT)")
   #   database.execute("CREATE TABLE IF NOT EXISTS goodbye(id INTEGER PRIMARY KEY, server_id INTEGER, channel_id INTEGER, channel_name TEXT, message TEXT)")
+  # # ---------LEVEL------
+  # try:
+  #   database.execute("INSERT INTO LEVEL_SETTING(server_id,level_up_channel_id,level_up_channel_name)",(guild.id,None,None))
+  # except:
+  #   database.execute("CREATE TABLE IF NOT EXISTS LEVEL_SETTING (id INTEGER PRIMARY KEY, server_id INTEGER, level_up_channel_id INTEGER, level_up_channel_name TEXT)")
+  #   database.execute("INSERT INTO LEVEL_SETTING(server_id,level_up_channel_id,level_up_channel_name)",(guild.id,None,None))
+  
+  # database.execute("CREATE TABLE IF NOT  EXISTS No_xp_channel(ID INTEGER PRIMARY KEY, server_id INTEGER, channel_name TEXT, channel_id INTEGER)")
+  
+  # # database.execute("INSERT INTO No_xp_channel(server_id,channel_name,channel_id)",(guild.id,None,None))
+  
+ 
+  # database.execute("CREATE TABLE IF NOT EXISTS No_xp_role(ID INTEGER PRIMARY KEY, server_id INTEGER, role_name TEXT, role_id INTEGER)")
+
+  # # database.execute("INSERT INTO No_xp_role(server_id,role_name,role_id)",(guild.id,None,None))
+  # database.execute("CREATE TABLE IF NOT EXISTS No_xp_role(ID INTEGER PRIMARY KEY, server_id INTEGER, role_name TEXT, role_id INTEGER,level_up_message TEXT)")
+  
+  # # database.execute("INSERT INTO LEVEL_ROLE(server_id,level,role_id,role_name,level_up_message)",(guild.id,None,0,0))
+  
+  # database.execute("CREATE TABLE IF NOT EXISTS users_Level(ID INTEGER PRIMARY KEY,server_id INTEGE,user_id INTEGER,user_name TEXT,xp INTEGER,level INTEGER)")
+  # # database.execute("INSERT INTO users_Level(server_id,user_id,user_name,xp,level) VALUES(?,?,?,?,?)",(guild.id,None,None,0,0))
+  
+  # # ---------LEVEL------
   
 @bot.event
 async def on_guild_remove(guild):
