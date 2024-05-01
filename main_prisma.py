@@ -92,41 +92,50 @@ async def on_guild_join(guild):
   }
   welcome = await db.welcome.create(data=welcome)
   print(f'created post: {welcome.json(indent=2, sort_keys=True)}')
-  leave = await db.leave.create(data=welcome)
+  leave = await db.goodbye.create(data=welcome)
   print(f'created post: {leave.json(indent=2, sort_keys=True)}')
-  lvlsys = {
-      "status": True,
-      "message": "Welcome to the server, {member.mention}! We are glad to have you.",
-      "role_id": {},
-      "role_set":{},
-      "NO_XP_role":{},
-      "NO_XP_channel":{},
-      
-  }
-  db.collection("servers").document(str(guild.id)).collection("Levels").document("levelsetting").set(lvlsys)
-  db.collection("servers").document(str(guild.id)).collection("Levels").document("user_lvl")
-  db.collection("servers").document(str(guild.id)).collection("moderation").document("image_Only").set({"status":False,"channel_id":{}})
-  db.collection("servers").document(str(guild.id)).collection("moderation").document("link_Only").set({"status":False,"channel_id":{}})
-  db.collection("servers").document(str(guild.id)).collection("moderation").document("member_count").set({"status":False})
-  db.collection("servers").document(str(guild.id)).collection("moderation").document("Join_Member_Role").set({"status":False,"channel_id":'','channel_name':"",'role_id':"",'role_name':""})
-  db.collection("servers").document(str(guild.id)).collection("moderation").document("Youtube_Notification").set({"status":False,"channel_id":'',"channel_name":"","youtube_channels":[],"videos":{}})
-
+  
   # ---------------firebase database-------------
   await db.connect()
   
   
-  await database.status.create(server_id=guild.id, welcome=False, JOIN_ROLE=False, goodbye=False, IMAGES_ONLY=False, LINKS_ONLY=False, REACTION_VERIFICATION_ROLE=False, youtube_channel=False)
-  await database.welcome.create(server_id=guild.id, channel_id=None, channel_name=None, message="")
-  await database.goodbye.create(server_id=guild.id, channel_id=None, channel_name=None, message="")
-  await database.levelsetting.create(server_id=guild.id, level_up_channel_id=None, level_up_channel_name=None)
-  
-  await database.disconnect()
+  await db.status.create(server_id=guild.id, welcome=False, JOIN_ROLE=False, goodbye=False, IMAGES_ONLY=False, LINKS_ONLY=False, REACTION_VERIFICATION_ROLE=False, youtube_channel=False)
+  await db.welcome.create(data={"server_id":guild.id, "channel_id":None, "channel_name":None, "message":"","status":False,})
+  await db.goodbye.create(data={"server_id":guild.id, "channel_id":None, "channel_name":None, "message":"","status":False})
+  await db.levelsetting.create(data = {"server_id":guild.id,"status":False,"level_up_channel_id":None, "level_up_channel_name":None})
+  await db.youtubesetting.create(data = {"server_id":guild.id,"status":False,"channel_id":None, "channel_name":None})
+  await db.reactionverificationrole.create(data={
+    "server_id":guild.id,
+    "channel_id":None,
+    "channel_name":None,
+    "dm_message":False,
+    "reaction":None,
+    "role_id":None,
+    "role_name":None
+  })
+  await db.disconnect()
   
   # # ---------LEVEL------
 
 @bot.event
 async def on_guild_remove(guild):
-   await db.collection("servers").document(str(guild.id)).delete()
+  await db.connect()
+  await db.status.delete(where={'server_id':guild.id})
+  await db.welcome.delete(where={'server_id':guild.id})
+  await db.goodbye.delete(where={'server_id':guild.id})
+  await db.levelsetting.delete(where={'server_id':guild.id})
+  await db.youtubesetting.delete(where={'server_id':guild.id})
+  await db.reactionverificationrole.delete(where={'server_id':guild.id})
+  # list of channels type table
+  await db.noxpchannel.delete_many(where={'server_id':guild.id})
+  await db.noxprole.delete_many(where={'server_id':guild.id})
+  await db.imagesonly.delete_many(where={'server_id':guild.id})
+  await db.linksonly.delete_many(where={'server_id':guild.id})
+  await db.youtubesubchannel.delete_many(where={'server_id':guild.id})
+  await db.youtubevideos.delete_many(where={'server_id':guild.id})
+  
+  
+  await db.disconnect()
 # ----------------------Bot Join /Leave Events Completed----------------------
 @bot.event
 async def on_message(message):

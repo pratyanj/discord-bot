@@ -44,6 +44,7 @@ model Welcome {
 model Goodbye {
   ID           Int    @id @default(autoincrement())
   server_id    Int    @unique
+  status       Boolean@default(false)
   channel_id   Int
   channel_name String
   message      String
