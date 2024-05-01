@@ -1,3 +1,4 @@
+import stat
 import discord
 from discord import app_commands
 from discord.ext import commands,tasks
@@ -8,6 +9,8 @@ import aiosqlite
 import config 
 
 # firebasre (database)
+import sqlite3
+from prisma import Prisma
 import firebase_admin
 from firebase_admin import credentials,firestore
 
@@ -23,11 +26,14 @@ import threading
 
 from fastapi.openapi.utils import get_openapi
 
-cred = credentials.Certificate("TO_bot.json")
-firebase_admin.initialize_app(cred)
 
-# initializing 
-db = firestore.client()
+# cred = credentials.Certificate("TO_bot.json")
+# firebase_admin.initialize_app(cred)
+# # initializing 
+# # db = firestore.client()
+
+
+db = Prisma()
 bot = commands.Bot(command_prefix='$' ,intents=discord.Intents.all())
 # if you want to make your specific bot help command you need to add belove line
 # bot = commands.Bot(command_prefix='$', help_command=None ,intents=discord.Intents.all())
@@ -67,21 +73,27 @@ async def on_guild_join(guild):
   log = await guild.create_text_channel(f'Bot-logs', overwrites=overwrites ,category =category)
   setup = await guild.create_text_channel(f'Bot-setup', overwrites=overwrites,category=category)
 
-  # ---------------firebase database-------------
-  data = {
-    "name":guild.name,
+  # ---------------prisma database-------------
+  await db.connect()
+  data1 = {
+    "server_id":guild.id,
+    "server_name":guild.name,
     "prefix":"$",
     "Log_channel_id":f"{log.id}",
   }
-  db.collection("servers").document(str(guild.id)).set(data)
+  server = await db.server.create(data=data1)
+  print(f'created post: {server.json(indent=2, sort_keys=True)}')
   welcome = {
+    "server_id":guild.id,
     "status":False,
-    "channel_id":'',
+    "channel_id":None,
     "channel_name":None,
     "message":"" 
   }
-  db.collection("servers").document(str(guild.id)).collection("Welcome_Leave").document("welcome").set(welcome)
-  db.collection("servers").document(str(guild.id)).collection("Welcome_Leave").document("leave").set(welcome)
+  welcome = await db.welcome.create(data=welcome)
+  print(f'created post: {welcome.json(indent=2, sort_keys=True)}')
+  leave = await db.leave.create(data=welcome)
+  print(f'created post: {leave.json(indent=2, sort_keys=True)}')
   lvlsys = {
       "status": True,
       "message": "Welcome to the server, {member.mention}! We are glad to have you.",
@@ -100,6 +112,18 @@ async def on_guild_join(guild):
   db.collection("servers").document(str(guild.id)).collection("moderation").document("Youtube_Notification").set({"status":False,"channel_id":'',"channel_name":"","youtube_channels":[],"videos":{}})
 
   # ---------------firebase database-------------
+  await db.connect()
+  
+  
+  await database.status.create(server_id=guild.id, welcome=False, JOIN_ROLE=False, goodbye=False, IMAGES_ONLY=False, LINKS_ONLY=False, REACTION_VERIFICATION_ROLE=False, youtube_channel=False)
+  await database.welcome.create(server_id=guild.id, channel_id=None, channel_name=None, message="")
+  await database.goodbye.create(server_id=guild.id, channel_id=None, channel_name=None, message="")
+  await database.levelsetting.create(server_id=guild.id, level_up_channel_id=None, level_up_channel_name=None)
+  
+  await database.disconnect()
+  
+  # # ---------LEVEL------
+
 @bot.event
 async def on_guild_remove(guild):
    await db.collection("servers").document(str(guild.id)).delete()
