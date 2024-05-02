@@ -13,16 +13,16 @@ generator client {
 // Define the Server table
 model Server {
   ID            Int    @id @default(autoincrement())
-  server_id     Int
+  server_id     BigInt @unique
   server_name   String
   prefix        String
-  log_channel   Int
+  log_channel   BigInt
 }
 
 // Define the Status table
 model Status {
   ID                            Int     @id @default(autoincrement())
-  server_id                     Int     @unique
+  server_id                     BigInt     @unique
   welcome                       Boolean @default(false)
   JOIN_ROLE                     Boolean @default(false)
   goodbye                       Boolean @default(false)
@@ -34,18 +34,18 @@ model Status {
 // Define the Welcome table
 model Welcome {
   ID           Int    @id @default(autoincrement())
-  server_id    Int    @unique
+  server_id    BigInt @unique
   status       Boolean@default(false)
-  channel_id   Int
+  channel_id   BigInt
   channel_name String
   message      String
 }
 // Define the Goodbye table
 model Goodbye {
   ID           Int    @id @default(autoincrement())
-  server_id    Int    @unique
+  server_id    BigInt @unique
   status       Boolean@default(false)
-  channel_id   Int
+  channel_id   BigInt
   channel_name String
   message      String
 }
@@ -53,26 +53,26 @@ model Goodbye {
 model JoinRole {
   ID          Int    @id @default(autoincrement())
   status      Boolean@default(false)
-  server_id   Int    @unique
-  role_id     Int
+  server_id   BigInt @unique
+  role_id     BigInt
   role_name   String
 }
 // Define the YouTubeSetting table
 model YouTubeSetting {
   ID           Int    @id @default(autoincrement())
-  server_id    Int    @unique
+  server_id    BigInt @unique
   status       Boolean@default(false)
-  channel_id   Int
+  channel_id   BigInt
   channel_name String
 }
 // Define the ReactionVerificationRole table
 model ReactionVerificationRole {
   ID             Int    @id @default(autoincrement())
-  server_id      Int    @unique
-  role_id        Int
+  server_id      BigInt @unique
+  role_id        BigInt
   role_name      String
   reaction       String
-  channel_id     Int
+  channel_id     BigInt
   channel_name   String
   status         Boolean @default(false)
   dm_message     Boolean @default(false)
@@ -80,41 +80,41 @@ model ReactionVerificationRole {
 // Define the LevelSetting table
 model LevelSetting {
   ID                   Int    @id @default(autoincrement())
-  server_id            Int    @unique
-  status               Boolean  @default(false)
-  level_up_channel_id  Int
+  server_id            BigInt @unique
+  status               Boolean@default(false)
+  level_up_channel_id  BigInt
   level_up_channel_name String
 }
 
 // Define the NoXPChannel table
 model NoXPChannel {
   ID           Int    @id @default(autoincrement())
-  server_id    Int
-  channel_id   Int
+  server_id    BigInt
+  channel_id   BigInt
   channel_name String
 }
 // Define the NoXPRole table
 model NoXPRole {
   ID          Int    @id @default(autoincrement())
-  server_id   Int
-  role_id     Int
+  server_id   BigInt
+  role_id     BigInt
   role_name   String
 }
 
 // Define the LevelRole table
 model LevelRole {
   ID               Int    @id @default(autoincrement())
-  server_id        Int
+  server_id        BigInt
   level            Int
-  role_id          Int
+  role_id          BigInt
   role_name        String
 }
 
 // Define the UsersLevel table
 model UsersLevel {
   ID         Int    @id @default(autoincrement())
-  server_id  Int
-  user_id    Int
+  server_id  BigInt
+  user_id    BigInt
   user_name  String
   level      Int    @default(0)
   xp         Int    @default(0)
@@ -124,16 +124,16 @@ model UsersLevel {
 // Define the ImagesOnly table
 model ImagesOnly {
   ID           Int    @id @default(autoincrement())
-  server_id    Int
-  channel_id   Int
+  server_id    BigInt
+  channel_id   BigInt
   channel_name String
 }
 
 // Define the LinksOnly table
 model LinksOnly {
   ID           Int    @id @default(autoincrement())
-  server_id    Int
-  channel_id   Int
+  server_id    BigInt
+  channel_id   BigInt
   channel_name String
 }
 
@@ -141,14 +141,14 @@ model LinksOnly {
 // Define the YouTubeSubChannel table
 model YouTubeSubChannel {
   ID         Int    @id @default(autoincrement())
-  server_id  Int
+  server_id  BigInt
   channel    String
 }
 
 // Define the YouTubeVideos table
 model YouTubeVideos {
   ID        Int    @id @default(autoincrement())
-  server_id Int
+  server_id BigInt
   channel   String
   video_id  String
 }
