@@ -75,33 +75,17 @@ async def on_guild_join(guild):
 
   # ---------------prisma database-------------
   await db.connect()
-  data1 = {
-    "server_id":guild.id,
-    "server_name":guild.name,
-    "prefix":"$",
-    "Log_channel_id":f"{log.id}",
-  }
-  server = await db.server.create(data=data1)
+  
+  server = await db.server.create(data={"server_id":guild.id,'server_name':guild.name, 'prefix':'$','log_channel':f"{log.id}"})
   print(f'created post: {server.json(indent=2, sort_keys=True)}')
-  welcome = {
-    "server_id":guild.id,
-    "status":False,
-    "channel_id":None,
-    "channel_name":None,
-    "message":"" 
-  }
-  welcome = await db.welcome.create(data=welcome)
+  
+  welcome = await db.welcome.create(data={'server_id':guild.id, "channel_id":None, "channel_name":None, "message":"","status":False,})
   print(f'created post: {welcome.json(indent=2, sort_keys=True)}')
-  leave = await db.goodbye.create(data=welcome)
+  
+  leave = await db.goodbye.create(data={"server_id":guild.id, "channel_id":None, "channel_name":None, "message":"","status":False})
   print(f'created post: {leave.json(indent=2, sort_keys=True)}')
   
   # ---------------firebase database-------------
-  await db.connect()
-  
-  
-  await db.status.create(server_id=guild.id, welcome=False, JOIN_ROLE=False, goodbye=False, IMAGES_ONLY=False, LINKS_ONLY=False, REACTION_VERIFICATION_ROLE=False, youtube_channel=False)
-  await db.welcome.create(data={"server_id":guild.id, "channel_id":None, "channel_name":None, "message":"","status":False,})
-  await db.goodbye.create(data={"server_id":guild.id, "channel_id":None, "channel_name":None, "message":"","status":False})
   await db.levelsetting.create(data = {"server_id":guild.id,"status":False,"level_up_channel_id":None, "level_up_channel_name":None})
   await db.youtubesetting.create(data = {"server_id":guild.id,"status":False,"channel_id":None, "channel_name":None})
   await db.reactionverificationrole.create(data={
