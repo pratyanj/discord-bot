@@ -152,3 +152,12 @@ model YouTubeVideos {
   channel   String
   video_id  String
 }
+
+model membercount{
+  ID                  Int     @id @default(autoincrement())
+  status              Boolean @default(false)
+  server_id           BigInt
+  Total_Members       BigInt
+  Online_Members      BigInt
+  Bots                BigInt 
+}

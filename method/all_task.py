@@ -2,6 +2,8 @@
 from discord.ext import tasks
 import scrapetube
 import discord
+from prisma import Prisma
+db = Prisma()
 # print("update_member_count.py")
 
 
@@ -14,6 +16,32 @@ async def updateMemberCount(bot, server_id, member_count_channel_id):
         member_count_channel = guild.get_channel(int(member_count_channel_id['😁Total Memberst']))
         bot_count_channel = guild.get_channel(int(member_count_channel_id['😎Online Members']))
         Online_Members_channel = guild.get_channel(int(member_count_channel_id['🤖Bots']))
+        
+        if guild and (member_count_channel and bot_count_channel and Online_Members_channel):
+            member_count = guild.member_count
+            bot_count = len([m for m in guild.members if not m.bot])
+            Online_Members = len(list(filter(lambda m: m.status == discord.Status.online, guild.members)))
+ 
+            await member_count_channel.edit(name=f'😁Total Memberst: {member_count}')
+            await bot_count_channel.edit(name=f'😎Online Members: {Online_Members}')
+            await Online_Members_channel.edit(name=f'🤖Bots: {bot_count}')
+            # print(f'Member count updated successfully: {bot_count}')
+        else:
+            print('Guild or channel not found.')
+    except Exception as e:
+        print(f'Error updating member count: {e}')
+
+# async def updateMemberCount1(bot, server_id,db):
+async def updateMemberCount1(bot, server_id,db):
+    try:
+        guild = bot.get_guild(server_id)
+        if not guild:
+            print('Guild not found.')
+            return
+        server = await db.membercount.find_unique(where={"server_id": server_id})
+        member_count_channel = server.Total_Members
+        bot_count_channel = server.Online_Members
+        Online_Members_channel = server.Bots
         
         if guild and (member_count_channel and bot_count_channel and Online_Members_channel):
             member_count = guild.member_count
@@ -68,3 +96,27 @@ async def youtube(bot, db, server_id):
         # If there are new videos, update the Firestore document
         if updated:
             youtube.set({'videos': stored_videos}, merge=True)
+
+async def youtube1(bot, server_id):
+    youtube = await db.youtubesetting.find_unique(where={"server_id": server_id})
+    # .set({"status":False,"channel_id":'',"channel_name":"","youtube_channels":[]})
+    youtube_data = youtube
+    youtube_channels = await db.youtubesubchannel.find_many(where={"server_id": server_id})
+    stored_videos = await db.youtubevideos.find_many(where={"server_id": server_id})
+    channel_id = youtube.channel_id
+    discord_channel = bot.get_channel(int(channel_id))
+
+    if discord_channel is None:
+        print(f"Could not access channel with ID: {channel_id}.")
+    else:
+        print(f"Notification channel: {discord_channel.name}")
+        for channel in youtube_channels:
+            print(f"Checking channel: {channel.channel}")
+            videos = scrapetube.get_channel(channel_username=channel.channel, limit=3)
+
+            for video in videos:
+                video_id = video['videoId']
+                await db.youtubevideos.create({"server_id":server_id,"channel":channel.channel,"video_id":video_id})
+                url = f"https://youtube.com/watch?v={video_id}"
+                print(f"New video: \n{url}")
+                await discord_channel.send(f"Hey @everyone, **{channel}** just posted a video! Go check it out!\n\n{url}")

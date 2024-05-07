@@ -232,12 +232,10 @@ async def get_prefix(bot, message):
 @tasks.loop(minutes=10)
 async def updateMemberCount():
   for guild in bot.guilds:
-    memberCount = db.collection("servers").document(str(guild.id)).collection("moderation").document("member_count").get()
-    if memberCount.exists:
-      memberCount_status = memberCount.to_dict()['status']
-      if memberCount_status == True:
-        member_count_channel_id = memberCount.to_dict()['📊SERVER STATS']
-        await all_task.updateMemberCount(bot, guild.id, member_count_channel_id)
+    memberCount = await db.membercount.find_unique(where={"server_id": guild.id})
+    if memberCount:
+      if memberCount.status == True:
+        await all_task.updateMemberCount(bot, guild.id, db)
 
 @tasks.loop(minutes=10)
 async def youtube():
