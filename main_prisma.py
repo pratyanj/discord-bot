@@ -1,4 +1,5 @@
 import stat
+from turtle import update
 import discord
 from discord import app_commands
 from discord.ext import commands,tasks
@@ -45,12 +46,12 @@ bot = commands.Bot(command_prefix='$' ,intents=discord.Intents.all())
 # ----------------------Bot Join /Leave Events Completed----------------------
 @bot.event
 async def on_member_join(member:discord.member):
-    await welcomeleave.welcome(member,db)
-    await welcomeleave.join_role(member,bot,db)
+    await welcomeleave.welcome(member)
+    await welcomeleave.join_role(member,bot)
 # If member leave server
 @bot.event 
 async def on_member_remove(member:discord.member):
-    await welcomeleave.Goodbye(member, db)
+    await welcomeleave.Goodbye(member)
 
 # Set the default prefix for a new server
 @bot.event
@@ -85,7 +86,6 @@ async def on_guild_join(guild):
   leave = await db.goodbye.create(data={"server_id":guild.id, "channel_id":None, "channel_name":None, "message":"","status":False})
   print(f'created post: {leave.json(indent=2, sort_keys=True)}')
   
-  # ---------------firebase database-------------
   await db.levelsetting.create(data = {"server_id":guild.id,"status":False,"level_up_channel_id":None, "level_up_channel_name":None})
   await db.youtubesetting.create(data = {"server_id":guild.id,"status":False,"channel_id":None, "channel_name":None})
   await db.reactionverificationrole.create(data={
@@ -97,6 +97,7 @@ async def on_guild_join(guild):
     "role_id":None,
     "role_name":None
   })
+  # ---------------database-------------
   await db.disconnect()
   
   # # ---------LEVEL------
@@ -128,7 +129,7 @@ async def on_message(message):
       print("User:",message.author)
       print("Message:\n",message.content)
       print("--------------------------------------------------------")
-    await image_channel.del_msg(message, db, bot)
+    await image_channel.del_msg(message, bot)
     await link_channel.del_link_msg(message,db,bot)
     await levelmain.level_on_message(message,db)
     
@@ -203,9 +204,11 @@ async def set_leavechannel(ctx,leave_channel:discord.TextChannel):
 # Set the custom prefix for the server
 @bot.command(name='setprefix', help='Set the prefix for this server.')
 async def setprefix(ctx, new_prefix):
-    prefix = db.collection("servers").document(int(ctx.guild.id))
-    prefix.update({"prefix": new_prefix})
-    await ctx.send(f'Prefix set to `{new_prefix}` for this server.')
+  await db.connect()
+  await db.server.update(where={"server_id": 1075308453024772156},data={"prefix": new_prefix})
+  await db.disconnect()
+  print(f"New prefix set to:{new_prefix}")
+  await ctx.send(f'Prefix set to `{new_prefix}` for this server.')
     
 @bot.command(name="createCAT",help="Create a category")
 async def createCAT(ctx, category_name):
@@ -219,32 +222,35 @@ async def get_prefix(bot, message):
     default_prefix = "$"
 
     # Retrieve the prefix from Firestore based on the server ID
-    server_doc = db.collection("servers").document(str(message.guild.id))
-    doc = server_doc.get()
-    
-    # Check if the document exists and contains a prefix
-    if doc.exists and "prefix" in doc.to_dict():
-      return doc.to_dict()["prefix"]
+    await db.connect()
+    server_doc =await db.server.find_unique({"server_id": message.guild.id})
+    if server_doc is not None:
+      prefix = server_doc.prefix
+      await db.disconnect()
+      return prefix
     else:
       return default_prefix
 # ------------------------------Bot all task------------------------------------------------------
 
 @tasks.loop(minutes=10)
 async def updateMemberCount():
+  await db.connect()
   for guild in bot.guilds:
     memberCount = await db.membercount.find_unique(where={"server_id": guild.id})
-    if memberCount:
+    if memberCount is not None:
       if memberCount.status == True:
-        await all_task.updateMemberCount(bot, guild.id, db)
+        await all_task.updateMemberCount(bot, guild.id)
+  await db.disconnect()
 
 @tasks.loop(minutes=10)
 async def youtube():
+  await db.connect()
   for guild in bot.guilds:
-      youtube_notification = db.collection("servers").document(str(guild.id)).collection("moderation").document("Youtube_Notification").get()
-      if youtube_notification.exists:
-        youtube_notification_status = youtube_notification.to_dict()['status']
-        if youtube_notification_status == True:
-          await all_task.youtube(bot,db,guild.id)
+      youtube_notification = await db.youtubesetting.find_unique(where={"server_id": guild.id})
+      if youtube_notification is not None:
+        if youtube_notification.status == True:
+          await all_task.youtube(bot,guild.id)
+  await db.disconnect()
 # ------------------------------------------------------------------------------------ 
 @bot.event
 async def on_ready():
