@@ -23,13 +23,8 @@ model Server {
 model Status {
   ID                            Int     @id @default(autoincrement())
   server_id                     BigInt     @unique
-  welcome                       Boolean @default(false)
-  JOIN_ROLE                     Boolean @default(false)
-  goodbye                       Boolean @default(false)
   IMAGES_ONLY                   Boolean @default(false) 
   LINKS_ONLY                    Boolean @default(false)
-  REACTION_VERIFICATION_ROLE    Boolean @default(false)
-  youtube_channel               Boolean @default(false)
 }
 // Define the Welcome table
 model Welcome {
