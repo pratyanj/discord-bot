@@ -105,20 +105,22 @@ async def on_guild_join(guild):
 @bot.event
 async def on_guild_remove(guild):
   await db.connect()
-  await db.status.delete(where={'server_id':guild.id})
-  await db.welcome.delete(where={'server_id':guild.id})
-  await db.goodbye.delete(where={'server_id':guild.id})
-  await db.levelsetting.delete(where={'server_id':guild.id})
-  await db.youtubesetting.delete(where={'server_id':guild.id})
-  await db.reactionverificationrole.delete(where={'server_id':guild.id})
-  # list of channels type table
-  await db.noxpchannel.delete_many(where={'server_id':guild.id})
-  await db.noxprole.delete_many(where={'server_id':guild.id})
-  await db.imagesonly.delete_many(where={'server_id':guild.id})
-  await db.linksonly.delete_many(where={'server_id':guild.id})
-  await db.youtubesubchannel.delete_many(where={'server_id':guild.id})
-  await db.youtubevideos.delete_many(where={'server_id':guild.id})
-  
+  try:
+    await db.status.delete(where={'server_id':guild.id})
+    await db.welcome.delete(where={'server_id':guild.id})
+    await db.goodbye.delete(where={'server_id':guild.id})
+    await db.levelsetting.delete(where={'server_id':guild.id})
+    await db.youtubesetting.delete(where={'server_id':guild.id})
+    await db.reactionverificationrole.delete(where={'server_id':guild.id})
+    # list of channels type table
+    await db.noxpchannel.delete_many(where={'server_id':guild.id})
+    await db.noxprole.delete_many(where={'server_id':guild.id})
+    await db.imagesonly.delete_many(where={'server_id':guild.id})
+    await db.linksonly.delete_many(where={'server_id':guild.id})
+    await db.youtubesubchannel.delete_many(where={'server_id':guild.id})
+    await db.youtubevideos.delete_many(where={'server_id':guild.id})
+  except:
+    print("Could not found the server in the database")
   
   await db.disconnect()
 # ----------------------Bot Join /Leave Events Completed----------------------
@@ -130,12 +132,12 @@ async def on_message(message):
       print("Message:\n",message.content)
       print("--------------------------------------------------------")
     await image_channel.del_msg(message, bot)
-    await link_channel.del_link_msg(message,db,bot)
-    await levelmain.level_on_message(message,db)
+    await link_channel.del_link_msg(message,bot)
+    await levelmain.level_on_message(message)
     
 @bot.event
 async def on_raw_reaction_add(payload):
-  await addRole.TO_member(payload,db)
+  await addRole.TO_member(payload)
 # ------------------------------------------------------------------------------------
 #                              My all command
 # ------------------------------------------------------------------------------------
@@ -156,15 +158,12 @@ async def check_bot_permissions(ctx):
 @bot.command(name="lvl", help="Check your level")
 async def lvl(ctx):
     print(ctx.author)
-    await myCommands.level(ctx,ctx.author,db)
+    await myCommands.level(ctx,ctx.author)
 
-@bot.command(name='code', help='Send a code block')
-async def send_code(ctx):
-    await myCommands.code(ctx)
 
 @bot.command(name="status_setup",help="Add memeber to your server")
 async def server_setup(ctx):
-  await myCommands.setup_member_count(ctx,db)
+  await myCommands.setup_member_count(ctx)
 # ----------lvl system----------
 @bot.group()
 async def lvlsys(ctx):
@@ -172,34 +171,34 @@ async def lvlsys(ctx):
 @lvlsys.command(aliases=["e","en"])
 @commands.has_permissions(manage_messages=True)
 async def enable(ctx):
-  await myCommands.enable_lvl(ctx,db)
+  await myCommands.enable_lvl(ctx)
 @lvlsys.command(aliases=["d","dis"])
 @commands.has_permissions(manage_messages=True)
 async def disable(ctx):
-  await myCommands.disable_lvl(ctx,db)
+  await myCommands.disable_lvl(ctx)
 
 @lvlsys.command(aliases=["sr","lvlrole"])
 @commands.has_permissions(manage_roles=True)
 async def set_role(ctx, level:int, role: discord.Role):
-  await myCommands.setrole(ctx,db,role,level)
+  await myCommands.setrole(ctx,role,level)
   
 @bot.command(name='rank', help='Check your rank')
 async def rank(ctx):
-  await myCommands.rank(ctx,db,firestore)
+  await myCommands.rank(ctx)
   
 @bot.command(name='add_join_role', help='Add role on join')
 async def add_join_role(ctx,channel:discord.channel,role:discord.role):
-  await myCommands.add_join_role(ctx,db,channel,role)
+  await myCommands.add_join_role(ctx,channel,role)
   
 # ------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------
 @bot.command(name='setwelcomechannel', help='Set the welcome channel.')
 async def set_welcomechannel(ctx,welcome_channel:discord.TextChannel):
-  await myCommands.setwelcomechannel(ctx,db,welcome_channel)
+  await myCommands.setwelcomechannel(ctx,welcome_channel)
   
 @bot.command(name='setleavechannel', help='Set the leave channel.')
 async def set_leavechannel(ctx,leave_channel:discord.TextChannel):
-  await myCommands.setleavechannel(ctx,db,leave_channel)
+  await myCommands.setleavechannel(ctx,leave_channel)
   
 # Set the custom prefix for the server
 @bot.command(name='setprefix', help='Set the prefix for this server.')
@@ -212,8 +211,7 @@ async def setprefix(ctx, new_prefix):
     
 @bot.command(name="createCAT",help="Create a category")
 async def createCAT(ctx, category_name):
-  await myCommands.create_category(ctx,db,category_name)
-    
+  await myCommands.create_category(ctx,db,category_name)    
 # ------------------------------------------------------------------------------------
 
 # Define a function to get the prefix from Firestore
@@ -268,7 +266,7 @@ def run_discord_bot():
 
 def run_fastapi_app():
     import uvicorn
-    uvicorn.run(api.myAPI(bot,db), host="0.0.0.0", port=8000)
+    uvicorn.run(api.myAPI(bot), host="0.0.0.0", port=8000)
     # uvicorn.run(api.myAPI(bot,db), host="192.168.0.23", port=8000)
 
 # Create threads for Discord bot and FastAPI app
