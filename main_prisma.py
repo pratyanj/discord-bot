@@ -1,5 +1,4 @@
-import stat
-from turtle import update
+
 import discord
 from discord import app_commands
 from discord.ext import commands,tasks
@@ -12,8 +11,7 @@ import config
 # firebasre (database)
 import sqlite3
 from prisma import Prisma
-import firebase_admin
-from firebase_admin import credentials,firestore
+
 
 # API
 
@@ -25,7 +23,6 @@ from fastapi.security import APIKeyHeader
 import uvicorn
 import threading
 
-from fastapi.openapi.utils import get_openapi
 
 
 # cred = credentials.Certificate("TO_bot.json")
@@ -57,19 +54,15 @@ async def on_member_remove(member:discord.member):
 @bot.event
 async def on_guild_join(guild):
   category_name = "Bot-Config"
-  role = await guild.create_role(name="TO-BOT", mentionable=True)
   overwrites = {
         guild.default_role: discord.PermissionOverwrite(read_messages=False),
         guild.me: discord.PermissionOverwrite(read_messages=True),
-        role: discord.PermissionOverwrite(read_messages=True)
     }
     
   # Create the category
   category =await guild.create_category(category_name ,overwrites=overwrites)
 
-  # Create the role with the same name as the category
-  # Assign the role to the member who executed the command
-  await guild.create_role(role)
+  
   # Create help channels within the newly created category
   log = await guild.create_text_channel(f'Bot-logs', overwrites=overwrites ,category =category)
   setup = await guild.create_text_channel(f'Bot-setup', overwrites=overwrites,category=category)
@@ -77,25 +70,24 @@ async def on_guild_join(guild):
   # ---------------prisma database-------------
   await db.connect()
   
-  server = await db.server.create(data={"server_id":guild.id,'server_name':guild.name, 'prefix':'$','log_channel':f"{log.id}"})
-  print(f'created post: {server.json(indent=2, sort_keys=True)}')
+  await db.server.create(data={"server_id":guild.id,'server_name':guild.name, 'prefix':'$','log_channel':f"{log.id}"})
   
-  welcome = await db.welcome.create(data={'server_id':guild.id, "channel_id":None, "channel_name":None, "message":"","status":False,})
-  print(f'created post: {welcome.json(indent=2, sort_keys=True)}')
+  await db.welcome.create(data={'server_id':guild.id, "channel_id":0, "channel_name":'', "message":"","status":False,})
   
-  leave = await db.goodbye.create(data={"server_id":guild.id, "channel_id":None, "channel_name":None, "message":"","status":False})
-  print(f'created post: {leave.json(indent=2, sort_keys=True)}')
+  await db.goodbye.create(data={"server_id":guild.id, "channel_id":0, "channel_name":'', "message":"","status":False})
   
-  await db.levelsetting.create(data = {"server_id":guild.id,"status":False,"level_up_channel_id":None, "level_up_channel_name":None})
-  await db.youtubesetting.create(data = {"server_id":guild.id,"status":False,"channel_id":None, "channel_name":None})
+  await db.levelsetting.create(data = {"server_id":guild.id,"status":False,"level_up_channel_id":0, "level_up_channel_name":''})
+  
+  await db.youtubesetting.create(data = {"server_id":guild.id,"status":False,"channel_id":0, "channel_name":''})
+  
   await db.reactionverificationrole.create(data={
     "server_id":guild.id,
-    "channel_id":None,
-    "channel_name":None,
+    "channel_id":0,
+    "channel_name":'',
     "dm_message":False,
-    "reaction":None,
-    "role_id":None,
-    "role_name":None
+    "reaction":'',
+    "role_id":0,
+    "role_name":''
   })
   # ---------------database-------------
   await db.disconnect()
@@ -103,9 +95,10 @@ async def on_guild_join(guild):
   # # ---------LEVEL------
 
 @bot.event
-async def on_guild_remove(guild):
+async def on_guild_remove(guild:discord.Guild):
   await db.connect()
   try:
+    await db.server.delete(where={'server_id':guild.id})
     await db.status.delete(where={'server_id':guild.id})
     await db.welcome.delete(where={'server_id':guild.id})
     await db.goodbye.delete(where={'server_id':guild.id})
@@ -129,11 +122,12 @@ async def on_message(message):
     if not message.author.bot:
       print("--------------------------------------------------------")
       print("User:",message.author)
-      print("Message:\n",message.content)
+      print("Message:",message.content)
       print("--------------------------------------------------------")
     await image_channel.del_msg(message, bot)
     await link_channel.del_link_msg(message,bot)
     await levelmain.level_on_message(message)
+    await bot.process_commands(message)
     
 @bot.event
 async def on_raw_reaction_add(payload):
@@ -141,21 +135,30 @@ async def on_raw_reaction_add(payload):
 # ------------------------------------------------------------------------------------
 #                              My all command
 # ------------------------------------------------------------------------------------
+# for slash command
+# @bot.hybrid_command(name='clear',with_app_command=True,description='The number of messages to delete.')
+@bot.hybrid_command(name='sync',description='Sync all slash commands')
+async def sync(ctx:commands.Context):
+  await ctx.send("Syncing...")
+  await bot.tree.sync()
+
 # @bot.tree.command(name='clear',description='The number of messages to delete.')
 @bot.command(name='clear',help='The number of messages to delete.')
 async def clear(ctx, amount: int):
   await myCommands.clear(ctx, amount)
 # Add cooldown to the clear command (optional)
 @clear.error
-async def clear_error(self, ctx, error):
+async def clear_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         await ctx.send(f'This command is on cooldown. Please try again in {round(error.retry_after, 2)} seconds.')
         
-@bot.command(name="Check",help="Check bot permissions")
+# @bot.command(name="check",help="Check bot permissions")
+@bot.hybrid_command(name="check",description="Check bot permissions",with_app_command=True)
 async def check_bot_permissions(ctx):
   await myCommands.check_bot_permissions(ctx)
   
-@bot.command(name="lvl", help="Check your level")
+# @bot.command(name="lvl", help="Check your level")
+@bot.hybrid_command(name="lvl", description="Check your level", with_app_command=True)
 async def lvl(ctx):
     print(ctx.author)
     await myCommands.level(ctx,ctx.author)
@@ -201,10 +204,11 @@ async def set_leavechannel(ctx,leave_channel:discord.TextChannel):
   await myCommands.setleavechannel(ctx,leave_channel)
   
 # Set the custom prefix for the server
-@bot.command(name='setprefix', help='Set the prefix for this server.')
-async def setprefix(ctx, new_prefix):
+@bot.hybrid_command(name='setprefix',description='Set the prefix for this server.',with_app_command=True)
+async def setprefix(ctx:commands.Context, new_prefix):
   await db.connect()
-  await db.server.update(where={"server_id": 1075308453024772156},data={"prefix": new_prefix})
+  server = await db.server.find_unique(where={"server_id": ctx.guild.id})
+  await db.server.update(where={"ID": server.ID},data={"prefix": new_prefix})
   await db.disconnect()
   print(f"New prefix set to:{new_prefix}")
   await ctx.send(f'Prefix set to `{new_prefix}` for this server.')
@@ -215,16 +219,17 @@ async def createCAT(ctx, category_name):
 # ------------------------------------------------------------------------------------
 
 # Define a function to get the prefix from Firestore
-async def get_prefix(bot, message):
+async def get_prefix(message:discord.Message):
     # Default prefix in case the server prefix is not found
     default_prefix = "$"
 
     # Retrieve the prefix from Firestore based on the server ID
     await db.connect()
     server_doc =await db.server.find_unique({"server_id": message.guild.id})
+    await db.disconnect()
     if server_doc is not None:
       prefix = server_doc.prefix
-      await db.disconnect()
+      
       return prefix
     else:
       return default_prefix
@@ -232,33 +237,45 @@ async def get_prefix(bot, message):
 
 @tasks.loop(minutes=10)
 async def updateMemberCount():
-  await db.connect()
   for guild in bot.guilds:
-    memberCount = await db.membercount.find_unique(where={"server_id": guild.id})
+    c = await db.connect()
+    print("Connecting to database")
+    memberCount = await db.membercount.find_first(where={"server_id": guild.id})
+    d = await db.disconnect()
+    if memberCount is None:
+      print(f"{guild.name} not found in database")
+    print("Disconnecting from database------------------------------------------------")
+   
     if memberCount is not None:
+      print(f"Updating member count for {guild.name}")
       if memberCount.status == True:
         await all_task.updateMemberCount(bot, guild.id)
-  await db.disconnect()
 
 @tasks.loop(minutes=10)
 async def youtube():
-  await db.connect()
+  print("-----------------------------------------youtube task-----------------------------------------")
   for guild in bot.guilds:
+      c = await db.connect()
+      print("Connecting to database")
       youtube_notification = await db.youtubesetting.find_unique(where={"server_id": guild.id})
+      d = await db.disconnect()
+      if youtube_notification is None:
+        print(f"{guild.name} not found in database")
+      print("Disconnecting from database------------------------------------------------")
       if youtube_notification is not None:
         if youtube_notification.status == True:
           await all_task.youtube(bot,guild.id)
-  await db.disconnect()
 # ------------------------------------------------------------------------------------ 
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user.name} ({bot.user.id})')
-    print('--------------------------------------------------------')
-    
-    # updateMemberCount.start()
+    updateMemberCount.start()
+    # discord py slash commands
+    # https://www.youtube.com/watch?v=Yx5YYmKeFgc
+    sleep(1)  
     youtube.start()
   
-bot.command_prefix = get_prefix
+
 # Run the bot
 # Run the bot and FastAPI concurrently using uvicorn
 def run_discord_bot():
