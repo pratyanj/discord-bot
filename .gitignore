@@ -1,6 +1,8 @@
 __pycache__/
+.vscode/
 bot/
 testing/
-.vscode/
+migrations/
+BOT.sqlite-journal
 config.py
 TO_bot.json
