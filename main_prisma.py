@@ -86,15 +86,11 @@ async def on_guild_join(guild):
     await db_connect()
 
     await db.server.create(data={"server_id": guild.id, 'server_name': guild.name, 'prefix': '$', 'log_channel': f"{log.id}"})
-
     await db.welcome.create(data={'server_id': guild.id, "channel_id": 0, "channel_name": '', "message": "", "status": False, })
-
     await db.goodbye.create(data={"server_id": guild.id, "channel_id": 0, "channel_name": '', "message": "", "status": False})
-
     await db.levelsetting.create(data={"server_id": guild.id, "status": False, "level_up_channel_id": 0, "level_up_channel_name": ''})
-
     await db.youtubesetting.create(data={"server_id": guild.id, "status": False, "channel_id": 0, "channel_name": ''})
-
+    await db.status.create(data={"server_id": guild.id,"IMAGES_ONLY": False, "LINKS_ONLY": False})
     await db.reactionverificationrole.create(data={
         "server_id": guild.id,
         "channel_id": 0,
