@@ -21,34 +21,34 @@ model Server {
 
 // Define the Status table
 model Status {
-  ID                            Int     @id @default(autoincrement())
-  server_id                     BigInt     @unique
-  IMAGES_ONLY                   Boolean @default(false) 
-  LINKS_ONLY                    Boolean @default(false)
+  ID            Int       @id @default(autoincrement())
+  server_id     BigInt    @unique
+  IMAGES_ONLY   Boolean   @default(false) 
+  LINKS_ONLY    Boolean   @default(false)
 }
 // Define the Welcome table
 model Welcome {
-  ID           Int    @id @default(autoincrement())
-  server_id    BigInt @unique
-  status       Boolean@default(false)
-  channel_id   BigInt
-  channel_name String
-  message      String
+  ID           Int      @id @default(autoincrement())
+  server_id    BigInt   @unique
+  status       Boolean  @default(false)
+  channel_id   BigInt   @default(0)
+  channel_name String   @default("")
+  message      String   @default("")
 }
 // Define the Goodbye table
 model Goodbye {
-  ID           Int    @id @default(autoincrement())
-  server_id    BigInt @unique
-  status       Boolean@default(false)
-  channel_id   BigInt
-  channel_name String
-  message      String
+  ID           Int      @id @default(autoincrement())
+  server_id    BigInt   @unique
+  status       Boolean  @default(false)
+  channel_id   BigInt   @default(0)
+  channel_name String   @default("")
+  message      String   @default("")
 }
 // Define the JoinRole table
 model JoinRole {
-  ID          Int    @id @default(autoincrement())
-  status      Boolean@default(false)
-  server_id   BigInt @unique
+  ID          Int     @id @default(autoincrement())
+  status      Boolean @default(false)
+  server_id   BigInt  @unique
   role_id     BigInt
   role_name   String
 }
@@ -66,11 +66,9 @@ model ReactionVerificationRole {
   server_id      BigInt @unique
   role_id        BigInt
   role_name      String
-  reaction       String
   channel_id     BigInt
   channel_name   String
   status         Boolean @default(false)
-  dm_message     Boolean @default(false)
 }
 // Define the LevelSetting table
 model LevelSetting {
@@ -143,7 +141,7 @@ model YouTubeSubChannel {
 // Define the YouTubeVideos table
 model YouTubeVideos {
   ID        Int    @id @default(autoincrement())
-  server_id BigInt
+  server_id BigInt 
   channel   String
   video_id  String
 }
@@ -151,7 +149,7 @@ model YouTubeVideos {
 model membercount{
   ID                  Int     @id @default(autoincrement())
   status              Boolean @default(false)
-  server_id           BigInt
+  server_id           BigInt  @unique
   Total_Members       BigInt
   Online_Members      BigInt
   Bots                BigInt 
