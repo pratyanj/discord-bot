@@ -40,9 +40,13 @@ async def updateMemberCount(bot, server_id):
     await db.disconnect() 
     
 async def youtube(bot, server_id):
+    print("------------------youtube------------------")
     await db.connect()
-    youtube = await db.youtubesetting.find_unique(where={"server_id": server_id})
-    ss = await db.server.find_unique(where={"id": server_id})
+    print("server: ", server_id)
+    youtube = await db.youtubesetting.find_first(where={"server_id": server_id})
+    print("dataTable:",youtube)
+    ss = await db.server.find_first(where={"server_id": server_id})
+    print("dataTable:",ss)
     if youtube == None:
         print("Not data found in database for youtube")
         await db.disconnect()
@@ -75,8 +79,11 @@ async def youtube(bot, server_id):
 
             for video in videos:
                 video_id = video['videoId']
-                await db.youtubevideos.create({"server_id":server_id,"channel":channel.channel,"video_id":video_id})
-                url = f"https://youtube.com/watch?v={video_id}"
-                print(f"New video: \n{url}")
-                await discord_channel.send(f"Hey @everyone, **{channel}** just posted a video! Go check it out!\n\n{url}")
+                vid = await db.youtubevideos.find_first(where={"server_id":server_id,"video_id":video_id})
+                if vid == None:
+                    await db.youtubevideos.create({"server_id":server_id,"channel":channel.channel,"video_id":video_id})
+                    print(f"New video found: {video_id}")
+                    url = f"https://youtube.com/watch?v={video_id}"
+                    print(f"New video: \n{url}")
+                    await discord_channel.send(f"Hey @everyone, **{channel.channel}** just posted a video! Go check it out!\n\n{url}")
     await db.disconnect()

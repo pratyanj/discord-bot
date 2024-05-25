@@ -29,9 +29,11 @@ import threading
 # firebase_admin.initialize_app(cred)
 # # initializing
 # # db = firestore.client()
-import logging
+
+# import logging
 # Initialize logging
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
+
 db = Prisma()
 bot = commands.Bot(command_prefix='$', intents=discord.Intents.all())
 # if you want to make your specific bot help command you need to add belove line
@@ -40,14 +42,14 @@ bot = commands.Bot(command_prefix='$', intents=discord.Intents.all())
 
 async def db_connect():
     if not db.is_connected():
-        logging.info("Connecting to database...")
+        print("Connecting to database...")
         await db.connect()
 
 
 async def db_disconnect():
     if db.is_connected():
         await db.disconnect()
-        logging.info("Disconnected from database")
+        print("Disconnected from database")
 
 # --------------------------------------------------------------------------------
 # ---------------------------DISCORD BOT SETTINGS---------------------------------
@@ -281,86 +283,90 @@ async def get_prefix(message: discord.Message):
 # ------------------------------Bot all task------------------------------------------------------
 
 
-@tasks.loop(minutes=10)
+async def import_server(guild):
+    category_name = "Bot-Config"
+    overwrites = {
+        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        guild.me: discord.PermissionOverwrite(read_messages=True),
+    }
+
+    # Create the category
+    category = await guild.create_category(category_name, overwrites=overwrites)
+
+    # Create help channels within the newly created category
+    log = await guild.create_text_channel(f'Bot-logs', overwrites=overwrites, category=category)
+    setup = await guild.create_text_channel(f'Bot-setup', overwrites=overwrites, category=category)
+
+    # ---------------prisma database-------------
+    await db_connect()
+
+    await db.server.create(data={"server_id": guild.id, 'server_name': guild.name, 'prefix': '$', 'log_channel': f"{log.id}"})
+    await db.welcome.create(data={'server_id': guild.id, "channel_id": 0, "channel_name": '', "message": "", "status": False, })
+    await db.goodbye.create(data={"server_id": guild.id, "channel_id": 0, "channel_name": '', "message": "", "status": False})
+    await db.levelsetting.create(data={"server_id": guild.id, "status": False, "level_up_channel_id": 0, "level_up_channel_name": ''})
+    await db.youtubesetting.create(data={"server_id": guild.id, "status": False, "channel_id": 0, "channel_name": ''})
+    await db.status.create(data={"server_id": guild.id, "IMAGES_ONLY": False, "LINKS_ONLY": False})
+    await db.reactionverificationrole.create(data={
+        "server_id": guild.id,
+        "channel_id": 0,
+        "channel_name": '',
+        "dm_message": False,
+        "reaction": '',
+        "role_id": 0,
+        "role_name": ''
+    })
+    # ---------------database-------------
+    await db_disconnect()
+
+
+@tasks.loop(minutes=1)
 async def updateMemberCount():
-    logging.info("--------- Update Member Count ---------")
+    print("--------- Update Member Count ---------")
     for guild in bot.guilds:
-        logging.info(
+        print(
             f"Member Count Processing guild: {guild.name} ({guild.id})")
         try:
             await db_connect()
-            logging.info(f"Querying member count from database {guild.id}...")
+            print(f"Querying member count from database {guild.id}...")
             memberCount = await db.membercount.find_first(where={"server_id": guild.id})
 
             if memberCount is None:
-                logging.info(f"{guild.name} not found in database")
-                # category_name = "Bot-Config"
-                # overwrites = {
-                #     guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                #     guild.me: discord.PermissionOverwrite(read_messages=True),
-                # }
-
-                # # Create the category
-                # category = await guild.create_category(category_name, overwrites=overwrites)
-
-                # # Create help channels within the newly created category
-                # log = await guild.create_text_channel(f'Bot-logs', overwrites=overwrites, category=category)
-                # setup = await guild.create_text_channel(f'Bot-setup', overwrites=overwrites, category=category)
-
-                # # ---------------prisma database-------------
-                # await db_connect()
-
-                # await db.server.create(data={"server_id": guild.id, 'server_name': guild.name, 'prefix': '$', 'log_channel': f"{log.id}"})
-                # await db.welcome.create(data={'server_id': guild.id, "channel_id": 0, "channel_name": '', "message": "", "status": False, })
-                # await db.goodbye.create(data={"server_id": guild.id, "channel_id": 0, "channel_name": '', "message": "", "status": False})
-                # await db.levelsetting.create(data={"server_id": guild.id, "status": False, "level_up_channel_id": 0, "level_up_channel_name": ''})
-                # await db.youtubesetting.create(data={"server_id": guild.id, "status": False, "channel_id": 0, "channel_name": ''})
-                # await db.status.create(data={"server_id": guild.id, "IMAGES_ONLY": False, "LINKS_ONLY": False})
-                # await db.reactionverificationrole.create(data={
-                #     "server_id": guild.id,
-                #     "channel_id": 0,
-                #     "channel_name": '',
-                #     "dm_message": False,
-                #     "reaction": '',
-                #     "role_id": 0,
-                #     "role_name": ''
-                # })
-                # # ---------------database-------------
-                # await db_disconnect()
+                print(f"{guild.name} not found in database")
+                await db_disconnect()
+                return
             else:
                 if memberCount.status:
-                    logging.info(f"Updating member count for {guild.name}")
+                    print(f"Updating member count for {guild.name}")
                     await all_task.updateMemberCount(bot, guild.id)
         except Exception as e:
-            logging.error(f"Error updating member count for {guild.name}: {e}")
+            print(f"Error updating member count for {guild.name}: {e}\n")
         finally:
-          await db_disconnect()
-               
-           
+            await db_disconnect()
 
 
-@tasks.loop(minutes=10)
+@tasks.loop(minutes=1)
 async def youtube():
-    logging.info("--------- YouTube Task ---------")
+    print("--------- YouTube Task ---------")
     for guild in bot.guilds:
-        logging.info(f"YouTube Processing guild: {guild.name} ({guild.id})")
+        print(f"YouTube Processing guild: {guild.name} ({guild.id})")
         try:
             await db_connect()
-            logging.info(f"Querying YouTube settings from database {guild.id}...")
+            print(f"Querying YouTube settings from database {guild.id}...")
             youtube_notification = await db.youtubesetting.find_unique(where={"server_id": guild.id})
 
             if youtube_notification is None:
-                logging.info(f"{guild.name} not found in database")
+                print(f"{guild.name} not found in database")
                 continue
 
             if youtube_notification.status:
-                logging.info(
+                print(
                     f"Handling YouTube notifications for {guild.name}")
                 await all_task.youtube(bot, guild.id)
         except Exception as e:
-           logging.error(f"Error handling YouTube notifications for {guild.name}: {e}")
+            print(
+                f"Error handling YouTube notifications for {guild.name}: {e}\n")
         finally:
-              await db_disconnect()
+            await db_disconnect()
 # ------------------------------------------------------------------------------------
 
 
@@ -372,7 +378,7 @@ async def on_ready():
     # https://www.youtube.com/watch?v=Yx5YYmKeFgc
 
     youtube.start()
-    # updateMemberCount.start()
+    updateMemberCount.start()
 
 
 # Run the bot
