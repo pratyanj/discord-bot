@@ -4,7 +4,7 @@ from prisma import Prisma
 
 from method.api import db_disconnect
 
-class Update_Member_Count(commands.Cog):
+class User_Member_Count(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.db = Prisma()
@@ -82,7 +82,7 @@ class Update_Member_Count(commands.Cog):
         await self.bot.wait_until_ready()
         print("Bot is ready. Starting member count task.")
 
-    @commands.hybrid_command(name="setup", description="Add member count to your server")
+    @commands.hybrid_command(name="setup", description="Add member count to your server",with_app_command=True)
     async def setup_member_count(self, ctx: commands.Context) -> None:
         await self.db_connect()
         guild = ctx.guild
@@ -107,7 +107,7 @@ class Update_Member_Count(commands.Cog):
         await self.db_disconnect()
         await ctx.send('Your server has been setup with server stats')
 
-    @commands.command(name="enable", description="Enable member count updates")
+    @commands.hybrid_command(name="enable", description="Enable member count updates",with_app_command=True)
     async def enable_member_count(self, ctx: commands.Context):
         server_id = ctx.guild.id
         await self.db_connect()
@@ -125,7 +125,7 @@ class Update_Member_Count(commands.Cog):
             await self.db_disconnect()
         await ctx.send(f"Member count updates enabled for {ctx.guild.name}")
     
-    @commands.command(name="disable", description="Disable member count updates")
+    @commands.hybrid_command(name="disable", description="Disable member count updates",with_app_command=True)
     async def disable_member_count(self, ctx: commands.Context):
         server_id = ctx.guild.id
         await self.db_connect()
@@ -142,7 +142,7 @@ class Update_Member_Count(commands.Cog):
             await self.db_disconnect()
             await ctx.send(f"Member count updates disabled for {ctx.guild.name}")
 
-    @commands.command(name="status", description="Check the status of member count updates")
+    @commands.hybrid_command(name="status", description="Check the status of member count updates",with_app_command=True)
     async def status_member_count(self, ctx: commands.Context):
         server_id = ctx.guild.id
         await self.db_connect()
@@ -154,11 +154,11 @@ class Update_Member_Count(commands.Cog):
             status_msg = "enabled" if server.status else "disabled"
             await ctx.send(f"Member count updates are currently {status_msg} for {ctx.guild.name}")
 
-    @commands.command(name="force_update_member_count", description="Force an immediate member count update")
+    @commands.hybrid_command(name="force_update_member_count", description="Force an immediate member count update",with_app_command=True)
     async def force_update_member_count(self, ctx: commands.Context):
         await self.update_member_count(ctx.guild.id)
         await ctx.send(f"Member count updated for {ctx.guild.name}")
 
 async def setup(bot: commands.Bot):
-    await bot.add_cog(UpdateMemberCountCog(bot))
+    await bot.add_cog(User_Member_Count(bot))
     print("UpdateMemberCountCog added to bot")
