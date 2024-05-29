@@ -6,7 +6,6 @@ class User_Member_Count(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.db = Prisma()
-        print("Initializing UpdateMemberCountCog")
         self.member_counts.start()
 
     async def db_connect(self):
