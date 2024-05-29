@@ -19,7 +19,7 @@ class youtube(commands.Cog):
             await self.db.disconnect()
             print("Disconnected from database")
     
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=10)
     async def check_youtube_videos(self):
         print("--------- YouTube Task ---------")
         for guild in self.bot.guilds:
@@ -96,6 +96,81 @@ class youtube(commands.Cog):
     @check_youtube_videos.before_loop
     async def before_tasks(self):
         await self.bot.wait_until_ready()
+        
+    @commands.hybrid_command(name="get_yt_sub_channels", description="Get YouTube subscribed channels for the guild", with_app_command=True)
+    async def get_yt_sub_channels(self, ctx: commands.Context):
+        await self.db_connect()
+        guild_id = ctx.guild.id
+        guild = await self.db.youtubesubchannel.find_many(where={"server_id": guild_id})
+        await self.db_disconnect()
+        
+        if guild:
+            channels = [entry.channel for entry in guild]
+            await ctx.send(f"Subscribed YouTube channels: {', '.join(channels)}")
+        else:
+            await ctx.send(f"No YouTube channels found for {ctx.guild.name}.")
+        
+    @commands.hybrid_command(name="yt_system_status", description="Set the YouTube notification system status", with_app_command=True)
+    async def yt_system_status(self, ctx: commands.Context, status: bool):
+        await self.db_connect()
+        guild_id = ctx.guild.id
+        yt = await self.db.youtubesetting.find_unique(where={"server_id": guild_id})
+        
+        if yt is None:
+            await self.db.youtubesetting.create(data={"server_id": guild_id, "status": status, "channel_id": 0, "channel_name": ""})
+            message = f"YouTube notification status created and set to {status}."
+        else:
+            await self.db.youtubesetting.update(where={"ID": yt.ID}, data={"status": status})
+            message = f"YouTube notification status updated to {status}."
+        
+        await self.db_disconnect()
+        await ctx.send(message)
+
+    @commands.hybrid_command(name="set_yt_notification_channel", description="Set the YouTube notification channel", with_app_command=True)
+    async def set_yt_notification_channel(self, ctx: commands.Context, channel: discord.TextChannel):
+        await self.db_connect()
+        guild_id = ctx.guild.id
+        yt = await self.db.youtubesetting.find_unique(where={"server_id": guild_id})
+        
+        if yt is None:
+            await self.db.youtubesetting.create(data={"server_id": guild_id, "status": True, "channel_id": channel.id, "channel_name": channel.name})
+            message = f"YouTube notification created and set to {channel.name} ({channel.id})."
+        else:
+            await self.db.youtubesetting.update(where={"ID": yt.ID}, data={"channel_id": channel.id, "channel_name": channel.name})
+            message = f"YouTube notification channel updated to {channel.name} ({channel.id})."
+        
+        await self.db_disconnect()
+        await ctx.send(message)
+
+    @commands.hybrid_command(name="subscribe_yt_channel", description="Subscribe to a YouTube channel by name", with_app_command=True)
+    async def subscribe_yt_channel(self, ctx: commands.Context, yt_channel_usr: str):
+        await self.db_connect()
+        guild_id = ctx.guild.id
+        yt_channels = await self.db.youtubesubchannel.find_many(where={"server_id": guild_id})
+        
+        if any(channel.channel == yt_channel_usr for channel in yt_channels):
+            message = f"YouTube notification is already set for {yt_channel_usr}."
+        else:
+            await self.db.youtubesubchannel.create(data={"server_id": guild_id, "channel": yt_channel_usr})
+            message = f"You subscribe to {yt_channel_usr} the YouTube channel successfully."
+        
+        await self.db_disconnect()
+        await ctx.send(message)
+
+    @commands.hybrid_command(name="remove_yt_channel", description="Remove a YouTube channel subscription", with_app_command=True)
+    async def remove_yt_channel(self, ctx: commands.Context, yt_channel_usr: str):
+        await self.db_connect()
+        guild_id = ctx.guild.id
+        yt_channel = await self.db.youtubesubchannel.find_first(where={"server_id": guild_id, "channel": yt_channel_usr})
+        
+        if yt_channel:
+            await self.db.youtubesubchannel.delete(where={"ID": yt_channel.ID})
+            message = f"{yt_channel_usr} unsubscribe the YouTube channel successfully."
+        else:
+            message = f"{yt_channel_usr} is not found in the subscription list."
+        
+        await self.db_disconnect()
+        await ctx.send(message)
         
 async def setup(bot:commands.Bot):
     await bot.add_cog(youtube(bot))
