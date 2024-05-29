@@ -2,8 +2,6 @@ import discord
 from discord.ext import commands, tasks
 from prisma import Prisma
 
-from method.api import db_disconnect
-
 class User_Member_Count(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
