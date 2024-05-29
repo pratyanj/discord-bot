@@ -27,7 +27,9 @@ class DiscordBot(commands.Bot):
             print("Disconnected from database")
 
     async def on_ready(self):
+        await bot.tree.sync()
         print(f'Logged in as {self.user.name} ({self.user.id})')
+        print("------------")
         
 
     async def setup_hook(self) -> None:
@@ -49,15 +51,6 @@ class DiscordBot(commands.Bot):
                     print(
                         f"Failed to load extension {extension}\n{exception}"
                     )
-
-    #-------------make cog---------
-    async def on_member_join(self, member):
-        await welcomeleave.welcome(member)
-        await welcomeleave.join_role(member, self)
-
-    async def on_member_remove(self, member):
-        await welcomeleave.Goodbye(member)
-    #-------------make cog---------
 
     async def on_guild_join(self, guild):
         await self.import_server(guild)
@@ -107,7 +100,7 @@ class DiscordBot(commands.Bot):
         else:
             return default_prefix
 
-    async def import_server(self, guild):
+    async def import_server(self, guild:discord.Guild):
         category_name = "Bot-Config"
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(read_messages=False),
@@ -160,13 +153,10 @@ async def clear_error(ctx, error):
 async def check_bot_permissions(ctx):
     await myCommands.check_bot_permissions(ctx)
 
+# --------------------------------------------------------------------------
 @bot.hybrid_command(name="lvl", description="Check your level", with_app_command=True)
 async def lvl(ctx):
     await myCommands.level(ctx, ctx.author)
-
-# @bot.command(name="status_setup", help="Add member count to your server")
-# async def server_setup(ctx):
-#     await myCommands.setup_member_count(ctx)
 
 @bot.group()
 async def lvlsys(ctx):
@@ -190,18 +180,7 @@ async def set_role(ctx, level: int, role: discord.Role):
 @bot.command(name='rank', help='Check your rank')
 async def rank(ctx):
     await myCommands.rank(ctx)
-
-@bot.command(name='add_join_role', help='Add role on join')
-async def add_join_role(ctx, channel: discord.TextChannel, role: discord.Role):
-    await myCommands.add_join_role(ctx, channel, role)
-
-@bot.command(name='setwelcomechannel', help='Set the welcome channel.')
-async def set_welcomechannel(ctx, welcome_channel: discord.TextChannel):
-    await myCommands.setwelcomechannel(ctx, welcome_channel)
-
-@bot.command(name='setleavechannel', help='Set the leave channel.')
-async def set_leavechannel(ctx, leave_channel: discord.TextChannel):
-    await myCommands.setleavechannel(ctx, leave_channel)
+# --------------------------------------------------------------------------
 
 @bot.hybrid_command(name='setprefix', description='Set the prefix for this server.', with_app_command=True)
 async def setprefix(ctx: commands.Context, new_prefix):
@@ -211,9 +190,39 @@ async def setprefix(ctx: commands.Context, new_prefix):
     await bot.db_disconnect()
     await ctx.send(f'Prefix set to `{new_prefix}` for this server.')
 
-@bot.command(name="createCAT", help="Create a category")
-async def createCAT(ctx, category_name):
-    await myCommands.create_category(ctx, bot.db, category_name)
+# @bot.command(name="createCAT", help="Create a category")
+# async def createCAT(ctx:commands.Context, category_name):
+#     await db_connect()
+#     guild = ctx.guild
+#     role = await guild.create_role(name=category_name, mentionable=True)
+#     overwrites = {
+#         guild.default_role: discord.PermissionOverwrite(read_messages=False),
+#         guild.me: discord.PermissionOverwrite(read_messages=True),
+#         role: discord.PermissionOverwrite(read_messages=True)
+#     }
+
+#     # Create the category
+#     category = await guild.create_category(category_name, overwrites=overwrites)
+
+#     # Create the role with the same name as the category
+#     # Assign the role to the member who executed the command
+#     await ctx.author.add_roles(role)
+#     # ctx.guild.get_role(role): discord.PermissionOverwrite(read_messages=True),
+#     # Create help channels within the newly created category
+#     link = await guild.create_text_channel(f'{category_name}_link', overwrites=overwrites, category=category)
+#     # print("link_id:",link.id,"link_name:",link.name)
+#     img = await guild.create_text_channel(f'{category_name}_img', overwrites=overwrites, category=category)
+#     await guild.create_text_channel(f'{category_name}_chat', overwrites=overwrites, category=category)
+
+#     # Append channel name and id to link_channel_list
+#     link_create = await self.db.linksonly.create(data={"server_id": ctx.guild.id, "channel_id": link.id, "channel_name": link.name})
+
+#     # Append channel name and id to imgl_channel_list
+#     img_create = await self.db.imagesonly.create(data={"server_id": ctx.guild.id, "channel_id": img.id, "channel_name": img.name})
+#     print(
+#         f"from command bot create the category\nlink channel:{link_create}\nimage channel:{img_create}")
+#     await self.db_disconnect()
+#     await ctx.send(f'Category "{category_name}" . Role assigned.')
 
 # FastAPI setup and run
 def run_fastapi_app():
