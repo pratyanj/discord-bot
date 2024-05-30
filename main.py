@@ -13,7 +13,7 @@ import threading
 
 class DiscordBot(commands.Bot):
     def __init__(self, command_prefix, intents):
-        super().__init__(command_prefix=command_prefix, intents=discord.Intents.all())
+        super().__init__(command_prefix=command_prefix, intents=discord.Intents.all(),help_command=None)
         self.db = Prisma()
 
     async def db_connect(self):
@@ -140,18 +140,18 @@ async def sync(ctx: commands.Context):
     await ctx.send("Syncing...")
     await bot.tree.sync()
 
-@bot.command(name='clear', help='The number of messages to delete.')
-async def clear(ctx, amount: int):
-    await myCommands.clear(ctx, amount)
+# @bot.command(name='clear', help='The number of messages to delete.')
+# async def clear(ctx, amount: int):
+#     await myCommands.clear(ctx, amount)
 
-@clear.error
-async def clear_error(ctx, error):
-    if isinstance(error, commands.CommandOnCooldown):
-        await ctx.send(f'This command is on cooldown. Please try again in {round(error.retry_after, 2)} seconds.')
+# @clear.error
+# async def clear_error(ctx, error):
+#     if isinstance(error, commands.CommandOnCooldown):
+#         await ctx.send(f'This command is on cooldown. Please try again in {round(error.retry_after, 2)} seconds.')
 
-@bot.hybrid_command(name="check", description="Check bot permissions", with_app_command=True)
-async def check_bot_permissions(ctx):
-    await myCommands.check_bot_permissions(ctx)
+# @bot.hybrid_command(name="check", description="Check bot permissions", with_app_command=True)
+# async def check_bot_permissions(ctx):
+#     await myCommands.check_bot_permissions(ctx)
 
 # --------------------------------------------------------------------------
 @bot.hybrid_command(name="lvl", description="Check your level", with_app_command=True)
@@ -182,13 +182,13 @@ async def rank(ctx):
     await myCommands.rank(ctx)
 # --------------------------------------------------------------------------
 
-@bot.hybrid_command(name='setprefix', description='Set the prefix for this server.', with_app_command=True)
-async def setprefix(ctx: commands.Context, new_prefix):
-    await bot.db_connect()
-    server = await bot.db.server.find_unique(where={"server_id": ctx.guild.id})
-    await bot.db.server.update(where={"ID": server.ID}, data={"prefix": new_prefix})
-    await bot.db_disconnect()
-    await ctx.send(f'Prefix set to `{new_prefix}` for this server.')
+# @bot.hybrid_command(name='setprefix', description='Set the prefix for this server.', with_app_command=True)
+# async def setprefix(ctx: commands.Context, new_prefix):
+#     await bot.db_connect()
+#     server = await bot.db.server.find_unique(where={"server_id": ctx.guild.id})
+#     await bot.db.server.update(where={"ID": server.ID}, data={"prefix": new_prefix})
+#     await bot.db_disconnect()
+#     await ctx.send(f'Prefix set to `{new_prefix}` for this server.')
 
 # @bot.command(name="createCAT", help="Create a category")
 # async def createCAT(ctx:commands.Context, category_name):
