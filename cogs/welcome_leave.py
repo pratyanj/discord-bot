@@ -154,7 +154,7 @@ class WelcomeLeaveCog(commands.Cog):
         await self.db_disconnect()
         await leave_channel.send(embed=leave_message)
     
-    @commands.hybrid_command(name='add_join_role', help='Add role on join')
+    @commands.hybrid_command(name='add_join_role', description='Add role on join')
     async def add_join_role(self,ctx:commands.Context, channel: discord.TextChannel, role: discord.Role):
         await self.db_connect()
         server = await self.db.joinrole.find_unique(where={"server_id": ctx.guild.id})
@@ -169,7 +169,7 @@ class WelcomeLeaveCog(commands.Cog):
         await self.db_disconnect()
         await ctx.send(f'Join role has been set to {role.name}!')
 
-    @commands.hybrid_command(name='setwelcomechannel', help='Set the welcome channel.')
+    @commands.hybrid_command(name='setwelcomechannel', description='Set the welcome channel.')
     async def set_welcomechannel(self,ctx:commands.Context, welcome_channel: discord.TextChannel):
         await self.db_connect()
         Guild = ctx.guild
@@ -194,7 +194,7 @@ class WelcomeLeaveCog(commands.Cog):
             await ctx.send(f"{Guild} is not a valid server id")
 
 
-    @commands.hybrid_command(name='setleavechannel', help='Set the leave channel.')
+    @commands.hybrid_command(name='setleavechannel', description='Set the leave channel.')
     async def set_leavechannel(self,ctx:commands.Context, leave_channel: discord.TextChannel):
         await self.db_connect()
         ss = await self.db.server.find_unique(where={"server_id": ctx.guild.id})
