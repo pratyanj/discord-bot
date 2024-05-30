@@ -212,7 +212,7 @@ async def rank(ctx):
     em = discord.Embed(
         title="🏆 Leaderboard 🏆",
         description=display,
-        color=discord.Colour.from_rgb(255, 255, 255))
+        color=discord.Colour.from_rgb(0, 97, 146))
     guild = ctx.bot.get_guild(ctx.guild.id)
     em.set_thumbnail(url=guild.icon)
     em.set_footer(text="Ranking of the top 10 users")
