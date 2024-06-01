@@ -78,11 +78,6 @@ class DiscordBot(commands.Bot):
     async def on_message(self, message):
         if not message.author.bot:
             print(f"User: {message.author}\nMessage: {message.content}")
-        #-------------make cog---------
-        await image_channel.del_msg(message, self)
-        await link_channel.del_link_msg(message, self)
-        await levelmain.level_on_message(message)
-        #-------------make cog---------
         await self.process_commands(message)
         
     #-------------make cog---------
