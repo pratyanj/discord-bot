@@ -2,6 +2,7 @@ import platform
 import random
 
 import aiohttp
+from click import Command
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -10,7 +11,7 @@ from prisma import Prisma
 import config
 
 class General(commands.Cog, name="general"):
-    def __init__(self, bot) -> None:
+    def __init__(self, bot:commands.bot) -> None:
         self.bot = bot
         self.db = Prisma()
         self.Mcolor = discord.Colour.from_rgb(0, 97, 146)
@@ -124,6 +125,11 @@ class General(commands.Cog, name="general"):
         embed.set_footer(text=f"Created at: {context.guild.created_at}")
         await context.send(embed=embed)
 
+    @commands.hybrid_command(name='sync', description='Sync all slash commands')
+    async def sync(self, ctx: commands.Context):
+        await ctx.send("Syncing...")
+        await self.bot.tree.sync()
+    
     @commands.hybrid_command(
         name="ping",
         description="Check if the bot is alive.",
