@@ -1,6 +1,6 @@
-from cgitb import grey
-from turtle import update
-from click import command
+# from cgitb import grey
+# from turtle import update
+# from click import command
 from discord.ext import commands
 import discord
 from easy_pil import *
