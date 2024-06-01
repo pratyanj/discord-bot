@@ -158,4 +158,3 @@ class User_Member_Count(commands.Cog):
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(User_Member_Count(bot))
-    print("UpdateMemberCountCog added to bot")
