@@ -173,15 +173,14 @@ class WelcomeLeaveCog(commands.Cog):
     async def set_welcomechannel(self,ctx:commands.Context, welcome_channel: discord.TextChannel):
         await self.db_connect()
         Guild = ctx.guild
-        channel = welcome_channel
+        channel = welcome_channel.id
         ss = await self.db.server.find_unique(where={"server_id": ctx.guild.id})
         if Guild:
             for chann in Guild.channels:
                 if chann.id == channel:
                     doc_ref = await self.db.welcome.find_unique(where={"server_id": ctx.guild.id})
                     if doc_ref == None:
-                        print(
-                            f"Table not found in database for welcome channel:{ctx.guild.id}")
+                        print(f"Table not found in database for welcome channel:{ctx.guild.id}")
                         await ctx.guild.get_channel(ss.log_channel).send(f"Table not found in database for welcome channel:{ctx.guild.id}")
                         await self.db_disconnect()
                         return
@@ -199,7 +198,7 @@ class WelcomeLeaveCog(commands.Cog):
         await self.db_connect()
         ss = await self.db.server.find_unique(where={"server_id": ctx.guild.id})
         Guild = ctx.guild
-        channel = leave_channel
+        channel = leave_channel.id
         if Guild:
             for chann in Guild.channels:
                 if chann.id == channel:
