@@ -28,13 +28,13 @@ class DiscordBot(commands.Bot):
 
     async def on_ready(self):
         await bot.tree.sync()
+        
         print(f'Logged in as {self.user.name} ({self.user.id})')
         print("------------")
         
 
     async def setup_hook(self) -> None:
       await self.load_cogs()
-    #   await self.updateMemberCount.start()
 
     async def load_cogs(self) -> None:
         """
@@ -55,7 +55,7 @@ class DiscordBot(commands.Bot):
     async def on_guild_join(self, guild):
         await self.import_server(guild)
 
-    async def on_guild_remove(self, guild):
+    async def on_guild_remove(self, guild: discord.Guild):
         await self.db_connect()
         try:
             await self.db.server.delete(where={'server_id': guild.id})
@@ -75,7 +75,7 @@ class DiscordBot(commands.Bot):
             print(f"Could not found the server in the database: {e}")
         await self.db_disconnect()
 
-    async def on_message(self, message):
+    async def on_message(self, message: discord.Message):
         if not message.author.bot:
             print(f"User: {message.author}\nMessage: {message.content}")
         await self.process_commands(message)
@@ -85,7 +85,7 @@ class DiscordBot(commands.Bot):
         await addRole.TO_member(payload)
     #-------------make cog---------
 
-    async def get_prefix(self, message):
+    async def get_prefix(self, message:discord.Message):
         default_prefix = "$"
         await self.db_connect()
         server_doc = await self.db.server.find_unique({"server_id": message.guild.id})
@@ -93,19 +93,30 @@ class DiscordBot(commands.Bot):
         if server_doc is not None:
             return server_doc.prefix
         else:
+            await self.db_connect()
+            await self.import_server(discord.Guild())
+            await self.db_disconnect()
             return default_prefix
 
     async def import_server(self, guild:discord.Guild):
+        
         category_name = "Bot-Config"
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(read_messages=False),
-            guild.me: discord.PermissionOverwrite(read_messages=True),
-        }
+        log_c = "Bot-logs"
+        setup_c = "Bot-setup"
+        try:
+            category = await discord.utils.get(guild.categories, name=category_name)
+            log = await discord.utils.get(guild.text_channels, name=log_c)
+            setup = await discord.utils.get(guild.text_channels, name=setup_c)
+        except:
+            overwrites = {
+                guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                guild.me: discord.PermissionOverwrite(read_messages=True),
+            }
 
-        category = await guild.create_category(category_name, overwrites=overwrites)
-        log = await guild.create_text_channel('Bot-logs', overwrites=overwrites, category=category)
-        setup = await guild.create_text_channel('Bot-setup', overwrites=overwrites, category=category)
-
+            category = await guild.create_category(category_name, overwrites=overwrites)
+            log = await guild.create_text_channel(log_c, overwrites=overwrites, category=category)
+            setup = await guild.create_text_channel(setup_c, overwrites=overwrites, category=category)
+        
         await self.db_connect()
         await self.db.server.create(data={"server_id": guild.id, 'server_name': guild.name, 'prefix': '$', 'log_channel': str(log.id)})
         await self.db.welcome.create(data={'server_id': guild.id, "channel_id": 0, "channel_name": '', "message": "", "status": False})
