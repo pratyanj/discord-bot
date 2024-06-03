@@ -1,3 +1,4 @@
+from email import message
 import discord
 from discord.ext import commands
 from prisma import Prisma
@@ -6,6 +7,7 @@ class WelcomeLeaveCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = Prisma()
+        self.Mcolor = discord.Colour.from_rgb(0, 97, 146)
 
     async def db_connect(self):
         if not self.db.is_connected():
@@ -99,7 +101,7 @@ class WelcomeLeaveCog(commands.Cog):
             em = discord.Embed(
                 title="Join Role",
                 description="Role not found in server",
-                color=discord.Colour.magenta()
+                color=discord.Colour.red()
             )
             await member.guild.get_channel(ss.log_channel).send(embed=em)
             return
@@ -155,19 +157,27 @@ class WelcomeLeaveCog(commands.Cog):
         await leave_channel.send(embed=leave_message)
     
     @commands.hybrid_command(name='add_join_role', description='Add role on join')
-    async def add_join_role(self,ctx:commands.Context, channel: discord.TextChannel, role: discord.Role):
+    async def add_join_role(self,ctx:commands.Context, role: discord.Role):
         await self.db_connect()
+        ss = await self.db.server.find_unique(where={"server_id": ctx.guild.id})
         server = await self.db.joinrole.find_unique(where={"server_id": ctx.guild.id})
         if server == None:
-            print(f"Table not found in database for join role:{ctx.guild.id}")
-            await ctx.guild.get_channel(channel.id).send(f"Table not found in database for join role:{ctx.guild.id}")
+            embed = discord.Embed(description=f"Table not found in database for join role:{ctx.guild.id}")
+            embed.color = discord.Colour.red()
+            embed.title = "Database"
+            
+            await ctx.guild.get_channel(ss.log_channel).send(embed=embed)
             await self.db_disconnect()
             return
         print("sevrer_data:", server)
         update = await self.db.joinrole.update(where={"ID":server.ID}, data={"status": True, "role_id": f"{role.id}", "role_name": f"{role.name}"})
         print("add_join_role:", update)
         await self.db_disconnect()
-        await ctx.send(f'Join role has been set to {role.name}!')
+        message = discord.Embed(
+            description=f"Join role has been set to:",
+            color=discord.Colour.from_rgb(0, 96, 154))
+        await ctx.send('Join role has been set to' ,f"```{role.name}```","!")
+
 
     @commands.hybrid_command(name='setwelcomechannel', description='Set the welcome channel.')
     async def set_welcomechannel(self,ctx:commands.Context, welcome_channel: discord.TextChannel):
