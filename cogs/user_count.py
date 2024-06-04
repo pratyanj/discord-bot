@@ -1,23 +1,26 @@
 import discord
 from discord.ext import commands, tasks
 from prisma import Prisma
-
+# when member jion raise the count ot total member
+# If member remove from the guild then dercrese the number of member
 class User_Member_Count(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.db = Prisma()
-        self.member_counts.start()
+        self.Mcolor = discord.Colour.from_rgb(0, 97, 146)
+        # self.member_counts.start()
 
     async def db_connect(self):
         if not self.db.is_connected():
-            print("Connecting to database...")
+            # print("Connecting to database...")
             await self.db.connect()
 
     async def db_disconnect(self):
         if self.db.is_connected():
             await self.db.disconnect()
-            print("Disconnected from database")
-
+            # print("Disconnected from database")
+    
+    
     async def update_member_count(self, server_id):
         print(f"Updating member count for server: {server_id}")
         await self.db_connect()
@@ -58,7 +61,7 @@ class User_Member_Count(commands.Cog):
     async def member_counts(self):
         print("--------- Update Member Count ---------")
         for guild in self.bot.guilds:
-            print(f"Processing guild: {guild.name} ({guild.id})")
+            # print(f"Processing guild: {guild.name} ({guild.id})")
             try:
                 await self.db_connect()
                 member_count = await self.db.membercount.find_first(where={"server_id": guild.id})
@@ -66,7 +69,7 @@ class User_Member_Count(commands.Cog):
                 if member_count is None:
                     print(f"{guild.name} not found in database")
                 elif member_count.status:
-                    print(f"Updating member count for {guild.name}")
+                    # print(f"Updating member count for {guild.name}")
                     await self.update_member_count(guild.id)
             except Exception as e:
                 print(f"Error updating member count for {guild.name}: {e}")
@@ -75,11 +78,11 @@ class User_Member_Count(commands.Cog):
 
     @member_counts.before_loop
     async def before_tasks(self):
-        print("Waiting until bot is ready...")
+        # print("Waiting until bot is ready...")
         await self.bot.wait_until_ready()
-        print("Bot is ready. Starting member count task.")
+        # print("Bot is ready. Starting member count task.")
 
-    @commands.hybrid_command(name="setup", description="Add member count to your server",with_app_command=True)
+    @commands.hybrid_command(name="setup", description="Add member count to your server")
     async def setup_member_count(self, ctx: commands.Context) -> None:
         await self.db_connect()
         guild = ctx.guild
@@ -102,59 +105,69 @@ class User_Member_Count(commands.Cog):
             "status": True
         })
         await self.db_disconnect()
-        await ctx.send('Your server has been setup with server stats')
+        em = discord.Embed(description="Your server has been setup with server stats", color=self.Mcolor)
+        await ctx.send(embed=em)
 
-    @commands.hybrid_command(name="enable", description="Enable member count updates",with_app_command=True)
+    @commands.hybrid_command(name="enable", description="Enable member count updates")
     async def enable_member_count(self, ctx: commands.Context):
         server_id = ctx.guild.id
         await self.db_connect()
         check = await self.db.membercount.find_first(where={"server_id": server_id})
-        await db_disconnect()
+        await self.db_disconnect()
         if check is None:
-            await ctx.send(f"Server {ctx.guild.name} not found in database")
+            emm = discord.Embed(description=f"Server `{ctx.guild.name}` not found in database", color=self.Mcolor)
+            await ctx.send(embed = emm)
             
         elif check.status:
-            await ctx.send(f"Member count already enabled for {ctx.guild.name}")
+            em = discord.Embed(description=f"Member count already enabled for `{ctx.guild.name}`", color=self.Mcolor)
+            await ctx.send(embed = em)
             
         else:
             await self.db_connect()
             await self.db.membercount.update(where={"server_id": server_id},data={"status": True})
             await self.db_disconnect()
-        await ctx.send(f"Member count updates enabled for {ctx.guild.name}")
+        em = discord.Embed(description=f"Member count updates enabled for `{ctx.guild.name}`", color=self.Mcolor)
+        await ctx.send(embed=em)
     
-    @commands.hybrid_command(name="disable", description="Disable member count updates",with_app_command=True)
+    @commands.hybrid_command(name="disable", description="Disable member count updates")
     async def disable_member_count(self, ctx: commands.Context):
         server_id = ctx.guild.id
         await self.db_connect()
         check = await self.db.membercount.find_first(where={"server_id": server_id})
-        await db_disconnect()
+        await self.db_disconnect()
         if check is None:
-            await ctx.send(f"Server {ctx.guild.name} not found in database")
+            em  = discord.Embed(description=f"Server `{ctx.guild.name}` not found in database", color=self.Mcolor)
+            await ctx.send(embed=em)
             
         elif not check.status:
-            await ctx.send(f"Member count already disabled for {ctx.guild.name}")
+            em = discord.Embed(description=f"Member count already disabled for `{ctx.guild.name}`", color=self.Mcolor)
+            await ctx.send(embed=em)
         else:
             await self.db_connect()  
             await self.db.membercount.update(where={"server_id": server_id},data={"status": False})
             await self.db_disconnect()
-            await ctx.send(f"Member count updates disabled for {ctx.guild.name}")
+            em = discord.Embed(description=f"Member count updates disabled for `{ctx.guild.name}`", color=self.Mcolor)
+            await ctx.send(embed=em)
 
-    @commands.hybrid_command(name="status", description="Check the status of member count updates",with_app_command=True)
+    @commands.hybrid_command(name="status", description="Check the status of member count updates")
     async def status_member_count(self, ctx: commands.Context):
         server_id = ctx.guild.id
         await self.db_connect()
         server = await self.db.membercount.find_first(where={"server_id": server_id})
         await self.db_disconnect()
         if server is None:
-            await ctx.send(f"Server {ctx.guild.name} not found in database")
+            em = discord.Embed(description = f"Server `{ctx.guild.name}` not found in database", color=self.Mcolor)
+            await ctx.send(embed=em)
         else:
             status_msg = "enabled" if server.status else "disabled"
-            await ctx.send(f"Member count updates are currently {status_msg} for {ctx.guild.name}")
+            em = discord.Embed(description=f"Member count updates are currently {status_msg} for {ctx.guild.name}", color=self.Mcolor)
+            await ctx.send(embed=em)
 
-    @commands.hybrid_command(name="force_update_member_count", description="Force an immediate member count update",with_app_command=True)
+    @commands.hybrid_command(name="force_update_member_count", description="Force an immediate member count update")
     async def force_update_member_count(self, ctx: commands.Context):
         await self.update_member_count(ctx.guild.id)
-        await ctx.send(f"Member count updated for {ctx.guild.name}")
+        em = discord.Embed(description=f"Member count updated for {ctx.guild.name}", color=self.Mcolor)
+        await ctx.send(embed=em)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(User_Member_Count(bot))
