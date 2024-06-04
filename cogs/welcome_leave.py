@@ -38,7 +38,7 @@ class WelcomeLeaveCog(commands.Cog):
             em = discord.Embed(
                 title="Welcome",
                 description=f"Server {member.guild.name} not found in database.",
-                color=discord.Colour.red()
+                color=self.Mcolor
             )
             await member.guild.get_channel(int(ss.log_channel)).send(embed=em)
             return
@@ -50,7 +50,7 @@ class WelcomeLeaveCog(commands.Cog):
             em = discord.Embed(
                 title="Welcome",
                 description=f"{member.guild.name} welcome message system is not enabled.",
-                color=discord.Colour.dark_blue()
+                color=self.Mcolor
             )
             await member.guild.get_channel(ss.log_channel).send(embed=em)
             return
@@ -61,7 +61,7 @@ class WelcomeLeaveCog(commands.Cog):
             em = discord.Embed(
                 title="Welcome",
                 description=f"Welcome channel not set for {member.guild.name}. Please set welcome channel.",
-                color=discord.Colour.dark_blue()
+                color=self.Mcolor
             )
             await member.guild.get_channel(ss.log_channel).send(embed=em)
             return
@@ -75,7 +75,7 @@ class WelcomeLeaveCog(commands.Cog):
         welcome_message = discord.Embed(
             title="Welcome to",
             description=message,
-            color=discord.Colour.from_rgb(0, 96, 154))
+            color=self.Mcolor)
         await welcome_channel.send(embed=welcome_message)
         await self.db_disconnect()
 
@@ -119,7 +119,7 @@ class WelcomeLeaveCog(commands.Cog):
             em = discord.Embed(
                 title="Database",
                 description=f"Server {member.guild.name} not found in database.",
-                color=discord.Colour.red()
+                color=self.Mcolor
             )
             await member.guild.get_channel(ss.log_channel).send(embed=em)
             return
@@ -130,7 +130,7 @@ class WelcomeLeaveCog(commands.Cog):
             em = discord.Embed(
                 title="Goodbye",
                 description="Goodbye message system is not enabled.",
-                color=discord.Colour.red()
+                color=self.Mcolor
             )
             await member.guild.get_channel(ss.log_channel).send(embed=em)
             return
@@ -140,7 +140,7 @@ class WelcomeLeaveCog(commands.Cog):
             leave_message = discord.Embed(
                 title="Goodbye",
                 description=f"Goodbye channel not set for {member.guild.name}. Please set goodbye channel.",
-                color=discord.Colour.from_rgb(0, 96, 154))
+                color=self.Mcolor)
             await member.guild.get_channel(ss.log_channel).send(embed=leave_message)
             await self.db_disconnect()
             return
@@ -152,7 +152,7 @@ class WelcomeLeaveCog(commands.Cog):
         leave_message = discord.Embed(
             title="Goodbye",
             description=message,
-            color=discord.Colour.from_rgb(0, 96, 154))
+            color=self.Mcolor)
         await self.db_disconnect()
         await leave_channel.send(embed=leave_message)
     
@@ -162,8 +162,8 @@ class WelcomeLeaveCog(commands.Cog):
         ss = await self.db.server.find_unique(where={"server_id": ctx.guild.id})
         server = await self.db.joinrole.find_unique(where={"server_id": ctx.guild.id})
         if server == None:
-            embed = discord.Embed(description=f"Table not found in database for join role:{ctx.guild.id}")
-            embed.color = discord.Colour.red()
+            embed = discord.Embed(description=f"Table not found in database for join role:`{ctx.guild.id}`")
+            embed.color = self.Mcolor
             embed.title = "Database"
             
             await ctx.guild.get_channel(ss.log_channel).send(embed=embed)
@@ -174,9 +174,9 @@ class WelcomeLeaveCog(commands.Cog):
         print("add_join_role:", update)
         await self.db_disconnect()
         message = discord.Embed(
-            description=f"Join role has been set to:",
-            color=discord.Colour.from_rgb(0, 96, 154))
-        await ctx.send('Join role has been set to' ,f"```{role.name}```","!")
+            description=f"Join role has been set to:`{role.name}`",
+            color=self.Mcolor)
+        await ctx.send(embed=message)
 
 
     @commands.hybrid_command(name='setwelcomechannel', description='Set the welcome channel.')
@@ -191,16 +191,23 @@ class WelcomeLeaveCog(commands.Cog):
                     doc_ref = await self.db.welcome.find_unique(where={"server_id": ctx.guild.id})
                     if doc_ref == None:
                         print(f"Table not found in database for welcome channel:{ctx.guild.id}")
-                        await ctx.guild.get_channel(ss.log_channel).send(f"Table not found in database for welcome channel:{ctx.guild.id}")
+                        em = discord.Embed(title="Database", description=f"Table not found in database for welcome channel:`{ctx.guild.id}`", color=self.Mcolor)
+                        await ctx.guild.get_channel(ss.log_channel).send(embed=em)
                         await self.db_disconnect()
                         return
                     update = await self.db.welcome.update(where={"ID":doc_ref.ID}, data={"status": True, "channel_id": f"{chann.id}", "channel_name": f"{chann.name}"})
                     print("setwelcomechannel:", update)
                     await self.db_disconnect()
-                    await ctx.send(f'Welcome channel has been set to {chann.name}!')
+                    embed = discord.Embed( description=f"The welcome channel has been set to `{chann.name}`!", color=self.Mcolor)
+                    await ctx.send(embed=embed)
         else:
             await self.db_disconnect()
-            await ctx.send(f"{Guild} is not a valid server id")
+            em = discord.Embed(
+                title="Database",
+                description=f"{Guild} is not a valid server id",
+                color=self.Mcolor
+            )
+            await ctx.send(embed=em)
 
 
     @commands.hybrid_command(name='setleavechannel', description='Set the leave channel.')
@@ -215,13 +222,18 @@ class WelcomeLeaveCog(commands.Cog):
                     doc_ref = await self.db.goodbye.find_unique(where={"server_id": ctx.guild.id})
                     if doc_ref == None:
                         print("Table not found in database for leave channel")
-                        await ctx.guild.get_channel(ss.log_channel).send(f"Table not found in database for leave channel:{ctx.guild.id}")
+                        em = discord.Embed(
+                            title="Database", 
+                            description=f"Table not found in database for leave channel:`{ctx.guild.id}`", 
+                            color=self.Mcolor)
+                        await ctx.guild.get_channel(ss.log_channel).send(embed=em)
                         await self.db_disconnect()
                         return
                     update = await self.db.goodbye.update(where={"ID":doc_ref.ID}, data={"status": True, "channel_id": f"{chann.id}", "channel_name": f"{chann.name}"})
                     print("setleavechannel:", update)
                     await self.db_disconnect()
-                    await ctx.send(f'Leave channel has been set to {chann.name}!')
+                    em = discord.Embed(description=f"The leave channel has been set to `{chann.name}`!", color=self.Mcolor)
+                    await ctx.send(embed=em)
 
 async def setup(bot:commands.Bot):
     await bot.add_cog(WelcomeLeaveCog(bot))
