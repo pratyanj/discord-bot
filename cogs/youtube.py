@@ -11,13 +11,13 @@ class youtube(commands.Cog):
         
     async def db_connect(self):
         if not self.db.is_connected():
-            print("Connecting to database...")
+            # print("Connecting to database...")
             await self.db.connect()
 
     async def db_disconnect(self):
         if self.db.is_connected():
             await self.db.disconnect()
-            print("Disconnected from database")
+            # print("Disconnected from database")
     
     @tasks.loop(minutes=10)
     async def check_youtube_videos(self):
@@ -36,14 +36,14 @@ class youtube(commands.Cog):
                 if youtube_notification.status:
                     print(
                         f"Handling YouTube notifications for {guild.name}")
-                    await self.youtube(self, guild.id)
+                    await self.youtube_main(self, guild.id)
             except Exception as e:
                 print(
                     f"Error handling YouTube notifications for {guild.name}: {e}\n")
             finally:
                 await self.db_disconnect()
     
-    async def youtube(self, server_id):
+    async def youtube_main(self, server_id):
         print("------------------youtube------------------")
         await self.db_connect()
         print("server: ", server_id)
