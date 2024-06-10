@@ -649,6 +649,26 @@ def myAPI(bot: commands.Bot):
             return {"message": f"Level role set to |**{rol.name}**|**{rol.id})**|"}
         else:
             return f"{guild} is not a valid server id"
+    
+    @app.post("/LVL_set_channel/", tags=["Level system"])
+    async def LVL_set_channel(guild: int, channel:int):
+        Guild = bot.get_guild(guild)
+        if Guild:
+            await db.connect()
+            lvl = await db.levelsetting.find_unique(where={"server_id": guild})
+            if lvl == None :
+                await db.disconnect()
+                return {"message": f"Level setting not found in database"}                
+                
+            if lvl.level_up_channel_id == channel.id:
+                await db.disconnect()
+                return {"message": f"Level up channel already set to {channel.name}"}
+            else:
+                update = await db.levelsetting.update(where={"ID": lvl.ID},data={"level_up_channel_id": channel.id,"level_up_channel_name": channel.name})
+                await db.disconnect()
+                return {"message": f"Level up channel set to {channel.name}"}
+        else:
+            return f"{guild} is not a valid server id"
     # --------------------------------------------------------------------------------
     # ----------------------------YOUTUBE-------------------------------------------
     @app.get("/GET_YT_SUB_channels_lst/", tags=["youtube"])
