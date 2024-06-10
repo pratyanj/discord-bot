@@ -107,13 +107,24 @@ class Level_System(commands.Cog):
                     try:
                         await author.add_roles(role)
                         em  = discord.Embed(description=f'🏆{author.mention} has just level upto **{level}** and reworded with {role.name}✨', color=self.Mcolor)
-                        await message.channel.send(embed=em)
+        
+                        if sys.level_up_channel_id == 0:
+                            await message.channel.send(embed=em)
+                        else:
+                            await message.guild.get_channel(sys.level_up_channel_id).sent(embed=em)
+    
                         return
                     except discord.HTTPException:
                         em = discord.Embed(description=f'{author.mention} Bot does not have permission for that add the role {role.name} to you.')
-                        await message.channel.send(embed=em)
-            em1 = discord.Embed(description=f"{msg}",color=self.Mcolor)         
-            await message.channel.send(embed=em1)
+                        if sys.level_up_channel_id == 0:
+                            await message.channel.send(embed=em)
+                        else:
+                            await message.guild.get_channel(sys.level_up_channel_id).sent(embed=em)
+            em1 = discord.Embed(description=f"{msg}",color=self.Mcolor)
+            if sys.level_up_channel_id == 0:
+                await message.channel.send(embed=em1)
+            else:
+                await message.guild.get_channel(sys.level_up_channel_id).sent(embed=em1)
 
     
     
@@ -326,6 +337,23 @@ class Level_System(commands.Cog):
         await ctx.send(embed=em)
         await self.db_disconnect()
 
-
+    @commands.hybrid_command(name='lvlsys_set_channel', help='Set channel for level up messages')
+    async def set_channel(self, ctx: commands.Context, channel: discord.TextChannel):
+        await self.db_connect()
+        lvl = await self.db.levelsetting.find_unique(where={"server_id": ctx.guild.id})
+        if lvl == None :
+            em = discord.Embed(description="Leveling system table not found in database",color=self.Mcolor)
+            await ctx.send(embed=em)
+            await self.db_disconnect()
+        if lvl.level_up_channel_id == channel.id:
+            em = discord.Embed(description=f"Channel is already setted to `{channel.name}`", color=self.Mcolor)
+            await ctx.send(embed=em)
+            await self.db_disconnect()
+        else:
+            update = await self.db.levelsetting.update(where={"server_id": ctx.guild.id}, data={"level_up_channel_id": channel.id,"level_up_channel_name": channel.name})
+            em = discord.Embed(description=f"Level system Channel has been set to `{channel.name}`",color=self.Mcolor)
+            await self.db_disconnect()
+            await ctx.send(embed=em)
+             
 async def setup(bot: commands.Bot):
     await bot.add_cog(Level_System(bot))
