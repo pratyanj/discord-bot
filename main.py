@@ -1,13 +1,12 @@
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 import asyncio
 import config
 import os
 
-from method import all_task, image_channel, link_channel, welcomeleave, addRole, myCommands, levelmain, api
+from method import  addRole, api
 from prisma import Prisma
 from fastapi import FastAPI
-import uvicorn
 import threading
 
 
@@ -143,7 +142,7 @@ bot = DiscordBot(command_prefix="$", intents=intents)
 # FastAPI setup and run
 def run_fastapi_app():
     import uvicorn
-    uvicorn.run(api.myAPI(bot), host="0.0.0.0", port=8000)
+    uvicorn.run(api.myAPI(bot), host="0.0.0.0", port=8001)
 
 def run_discord_bot():
     bot.run(config.TOKEN)
