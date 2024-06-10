@@ -1,3 +1,4 @@
+from typing import Self
 import discord
 from discord.ext import commands, tasks
 from prisma import Prisma
@@ -61,7 +62,7 @@ class User_Member_Count(commands.Cog):
     async def member_counts(self):
         print("--------- Update Member Count ---------")
         for guild in self.bot.guilds:
-            # print(f"Processing guild: {guild.name} ({guild.id})")
+            print(f"Processing guild: {guild.name} ({guild.id})")
             try:
                 await self.db_connect()
                 member_count = await self.db.membercount.find_first(where={"server_id": guild.id})
@@ -81,32 +82,41 @@ class User_Member_Count(commands.Cog):
         # print("Waiting until bot is ready...")
         await self.bot.wait_until_ready()
         # print("Bot is ready. Starting member count task.")
-
+        
     @commands.hybrid_command(name="setup", description="Add member count to your server")
     async def setup_member_count(self, ctx: commands.Context) -> None:
         await self.db_connect()
-        guild = ctx.guild
+        db = await self.db.membercount.find_first(where={"server_id": ctx.guild.id})
+        if db is None:
+            guild = ctx.guild
 
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(read_messages=False),
-            guild.me: discord.PermissionOverwrite(read_messages=True),
-        }
-        category_name = "📊SERVER STATS"
-        category = await guild.create_category(category_name, overwrites=overwrites)
-        member_count = await guild.create_voice_channel('😁Total Members', overwrites=overwrites, category=category)
-        online_member_count = await guild.create_voice_channel('😎Online Members', overwrites=overwrites, category=category)
-        bot_count = await guild.create_voice_channel('🤖Bots', overwrites=overwrites, category=category)
+            overwrites = {
+                guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                guild.me: discord.PermissionOverwrite(read_messages=True),
+            }
+            category_name = "📊SERVER STATS"
+            category = await guild.create_category(category_name, overwrites=overwrites)
+            await category.edit(position=0)
+            member_count = await guild.create_voice_channel('😁Total Members', overwrites=overwrites, category=category)
+            online_member_count = await guild.create_voice_channel('😎Online Members', overwrites=overwrites, category=category)
+            bot_count = await guild.create_voice_channel('🤖Bots', overwrites=overwrites, category=category)
 
-        await self.db.membercount.create(data={
-            "server_id": ctx.guild.id,
-            "Total_Members": member_count.id,
-            "Online_Members": online_member_count.id,
-            "Bots": bot_count.id,
-            "status": True
-        })
-        await self.db_disconnect()
-        em = discord.Embed(description="Your server has been setup with server stats", color=self.Mcolor)
-        await ctx.send(embed=em)
+            await self.db.membercount.create(data={
+                "server_id": ctx.guild.id,
+                "Total_Members": member_count.id,
+                "Online_Members": online_member_count.id,
+                "Bots": bot_count.id,
+                "status": True
+            })
+            await self.db_disconnect()
+            em = discord.Embed(description="Your server has been setup with server stats", color=self.Mcolor)
+            await ctx.send(embed=em)
+            return
+        else:
+            print(f"Server {ctx.guild.name} found in database.")
+            em = discord.Embed(title="Member Count Setup", description="Member count is already setup for this server.", color=self.Mcolor)
+            await ctx.send(embed=em)
+            return
 
     @commands.hybrid_command(name="enable", description="Enable member count updates")
     async def enable_member_count(self, ctx: commands.Context):
@@ -118,7 +128,7 @@ class User_Member_Count(commands.Cog):
             emm = discord.Embed(description=f"Server `{ctx.guild.name}` not found in database", color=self.Mcolor)
             await ctx.send(embed = emm)
             
-        elif check.status:
+        if check.status:
             em = discord.Embed(description=f"Member count already enabled for `{ctx.guild.name}`", color=self.Mcolor)
             await ctx.send(embed = em)
             
@@ -163,11 +173,11 @@ class User_Member_Count(commands.Cog):
             em = discord.Embed(description=f"Member count updates are currently {status_msg} for {ctx.guild.name}", color=self.Mcolor)
             await ctx.send(embed=em)
 
-    @commands.hybrid_command(name="force_update_member_count", description="Force an immediate member count update")
-    async def force_update_member_count(self, ctx: commands.Context):
-        await self.update_member_count(ctx.guild.id)
-        em = discord.Embed(description=f"Member count updated for {ctx.guild.name}", color=self.Mcolor)
-        await ctx.send(embed=em)
+    # @commands.hybrid_command(name="force_update_member_count", description="Force an immediate member count update")
+    # async def force_update_member_count(self, ctx: commands.Context):
+    #     await self.update_member_count(ctx.guild.id)
+    #     em = discord.Embed(description=f"Member count updated for {ctx.guild.name}", color=self.Mcolor)
+    #     await ctx.send(embed=em)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(User_Member_Count(bot))
