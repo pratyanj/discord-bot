@@ -375,6 +375,37 @@ class Moderation(commands.Cog, name="moderation"):
         await context.send(file=f)
         os.remove(log_file)
 
+    @commands.hybrid_command(name='setprefix', description='Set the prefix for this server.', with_app_command=True)
+    @app_commands.describe(new_prefix="The new prefix for this server.")
+    @commands.has_permissions(administrator=True)
+    async def setprefix(self,ctx: commands.Context, new_prefix):
+        await self.db.connect()
+        server = await self.db.server.find_unique(where={"server_id": ctx.guild.id})
+        await self.db.server.update(where={"ID": server.ID}, data={"prefix": new_prefix})
+        await self.db.disconnect()
+        em = discord.Embed(
+            title="Prefix Changed",
+            description=f"Prefix changed to `{new_prefix}` for this server.",
+            color=self.Mcolor,
+        )
+        await ctx.send(embed=em)
+    
+    @commands.hybrid_command(name="check", description="Check bot permissions", with_app_command=True)
+    async def check_bot_permissions(self,ctx:commands.Context):
+        print("Checking bot permissions...")
+        # Check permissions in the channel where the command was invoked
+        channel = ctx.channel
+        bot_permissions = channel.permissions_for(ctx.me)
+
+        # Prepare a formatted message with permissions
+        permissions_message = '\n'.join(
+            [f'{permission}: {value}' for permission, value in bot_permissions])
+
+        # Respond with the permissions message
+        embed = discord.Embed(title=f'Bot permissions in {channel.name}', description=permissions_message)
+        await ctx.send(embed=embed)
+
+
 
 async def setup(bot) -> None:
     await bot.add_cog(Moderation(bot))
