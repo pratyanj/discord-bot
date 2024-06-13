@@ -84,6 +84,7 @@ class User_Member_Count(commands.Cog):
         # print("Bot is ready. Starting member count task.")
         
     @commands.hybrid_command(name="setup", description="Add member count to your server")
+    @commands.has_permissions(administrator=True)
     async def setup_member_count(self, ctx: commands.Context) -> None:
         await self.db_connect()
         db = await self.db.membercount.find_first(where={"server_id": ctx.guild.id})
@@ -119,6 +120,7 @@ class User_Member_Count(commands.Cog):
             return
 
     @commands.hybrid_command(name="enable", description="Enable member count updates")
+    @commands.has_permissions(administrator=True)
     async def enable_member_count(self, ctx: commands.Context):
         server_id = ctx.guild.id
         await self.db_connect()
@@ -140,6 +142,7 @@ class User_Member_Count(commands.Cog):
         await ctx.send(embed=em)
     
     @commands.hybrid_command(name="disable", description="Disable member count updates")
+    @commands.has_permissions(administrator=True)
     async def disable_member_count(self, ctx: commands.Context):
         server_id = ctx.guild.id
         await self.db_connect()
@@ -160,6 +163,7 @@ class User_Member_Count(commands.Cog):
             await ctx.send(embed=em)
 
     @commands.hybrid_command(name="status", description="Check the status of member count updates")
+    @commands.has_permissions(administrator=True)
     async def status_member_count(self, ctx: commands.Context):
         server_id = ctx.guild.id
         await self.db_connect()

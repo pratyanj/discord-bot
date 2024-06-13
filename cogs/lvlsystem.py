@@ -214,6 +214,7 @@ class Level_System(commands.Cog):
 
     @commands.hybrid_command(name="lvlsys_enable", description="Enable leveling system")
     @commands.has_permissions(manage_messages=True)
+    @commands.has_permissions(administrator=True)
     async def enable(self, ctx: commands.Context):
         await self.db_connect()
         lvldb = await self.db.levelsetting.find_unique(where={"server_id": ctx.guild.id})
@@ -248,6 +249,7 @@ class Level_System(commands.Cog):
 
     @commands.hybrid_command(name="lvlsys_disable",description="Disable leveling system")
     @commands.has_permissions(manage_messages=True)
+    @commands.has_permissions(administrator=True)
     async def disable(self, ctx: commands.Context):
         await self.db_connect()
         ss = await self.db.server.find_unique(where={"server_id": ctx.guild.id})
@@ -277,6 +279,7 @@ class Level_System(commands.Cog):
 
     @commands.hybrid_command(name="lvlrole",description="Set a role for a level")
     @commands.has_permissions(manage_roles=True)
+    @commands.has_permissions(administrator=True)
     async def set_role(self, ctx: commands.Context, level: int, role: discord.Role):
         await self.db_connect()
         ss = await self.db.server.find_unique(where={"server_id": ctx.guild.id})
@@ -338,6 +341,7 @@ class Level_System(commands.Cog):
         await self.db_disconnect()
 
     @commands.hybrid_command(name='lvlsys_set_channel', help='Set channel for level up messages')
+    @commands.has_permissions(administrator=True)
     async def set_channel(self, ctx: commands.Context, channel: discord.TextChannel):
         await self.db_connect()
         lvl = await self.db.levelsetting.find_unique(where={"server_id": ctx.guild.id})
