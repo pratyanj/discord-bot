@@ -98,6 +98,7 @@ class youtube(commands.Cog):
         await self.bot.wait_until_ready()
         
     @commands.hybrid_command(name="get_yt_sub_channels", description="Get YouTube subscribed channels for the guild", with_app_command=True)
+    @commands.has_permissions(administrator=True)
     async def get_yt_sub_channels(self, ctx: commands.Context):
         await self.db_connect()
         guild_id = ctx.guild.id
@@ -111,6 +112,7 @@ class youtube(commands.Cog):
             await ctx.send(f"No YouTube channels found for {ctx.guild.name}.")
         
     @commands.hybrid_command(name="yt_system_status", description="Set the YouTube notification system status", with_app_command=True)
+    @commands.has_permissions(administrator=True)
     async def yt_system_status(self, ctx: commands.Context, status: bool):
         await self.db_connect()
         guild_id = ctx.guild.id
@@ -127,6 +129,7 @@ class youtube(commands.Cog):
         await ctx.send(message)
 
     @commands.hybrid_command(name="set_yt_notification_channel", description="Set the YouTube notification channel", with_app_command=True)
+    @commands.has_permissions(administrator=True)
     async def set_yt_notification_channel(self, ctx: commands.Context, channel: discord.TextChannel):
         await self.db_connect()
         guild_id = ctx.guild.id
@@ -143,6 +146,7 @@ class youtube(commands.Cog):
         await ctx.send(message)
 
     @commands.hybrid_command(name="subscribe_yt_channel", description="Subscribe to a YouTube channel by name", with_app_command=True)
+    @commands.has_permissions(administrator=True)
     async def subscribe_yt_channel(self, ctx: commands.Context, yt_channel_usr: str):
         await self.db_connect()
         guild_id = ctx.guild.id
@@ -158,6 +162,7 @@ class youtube(commands.Cog):
         await ctx.send(message)
 
     @commands.hybrid_command(name="remove_yt_channel", description="Remove a YouTube channel subscription", with_app_command=True)
+    @commands.has_permissions(administrator=True)
     async def remove_yt_channel(self, ctx: commands.Context, yt_channel_usr: str):
         await self.db_connect()
         guild_id = ctx.guild.id
