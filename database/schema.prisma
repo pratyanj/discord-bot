@@ -1,6 +1,7 @@
 // database
 datasource db {
   provider = "sqlite"
+  // url      = "file:D:/www/wwwroot/TechTOnions_Bot/Backend V2/database/BOT.sqlite"
   url      = "file:D:/pratyanj laptop/python/discordbot/TO bot/mainBOT V2/database/BOT.sqlite"
 }
 // generator
