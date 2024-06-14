@@ -213,34 +213,34 @@ def myAPI(bot: commands.Bot):
     @app.get("/GET_status/", tags=["bot sevrver"])
     async def GET_status(guild: int):
         Guild = bot.get_guild(guild)
-        print("Guild:", Guild)
+        # print("Guild:", Guild)
         if Guild:
             await db_connect()
             Welcome = await db.welcome.find_unique(where={"server_id": guild})
             Welcome_status = False if Welcome is None else Welcome.status
-            print("Welcome_status:", Welcome_status)
+            # print("Welcome_status:", Welcome_status)
 
             Leave = await db.goodbye.find_unique(where={"server_id": guild})
             Leave_status = False if Leave is None else Leave.status
-            print("Leave_status:", Leave_status)
+            # print("Leave_status:", Leave_status)
 
             Join_Member_Role = await db.joinrole.find_unique(where={"server_id": guild})
             Join_Member_Role_status = False if Join_Member_Role is None else Join_Member_Role.status
-            print("Join_Member_Role_status:", Join_Member_Role_status)
+            # print("Join_Member_Role_status:", Join_Member_Role_status)
 
             status = await db.status.find_unique(where={"server_id": guild})
             image_share_status = False if status is None else status.IMAGES_ONLY
-            print("IMG_Only_status:", image_share_status)
+            # print("IMG_Only_status:", image_share_status)
 
             link_share_status = False if status is None else status.LINKS_ONLY
-            print("Link_Only_status:", link_share_status)
+            # print("Link_Only_status:", link_share_status)
 
             try:
                 member_count = await db.membercount.find_unique(where={"server_id": guild})
             except:
                 member_count = await db.membercount.find_first(where={"server_id": guild})
             member_count_status = False if member_count is None else member_count.status
-            print("Memeber_Count_status:", member_count_status)
+            # print("Memeber_Count_status:", member_count_status)
 
             Levels = await db.levelsetting.find_unique(where={"server_id": guild})
             Levels_status = False if Levels is None else Levels.status
@@ -250,7 +250,7 @@ def myAPI(bot: commands.Bot):
 
             verification = await db.reactionverificationrole.find_unique(where={"server_id": guild})
             verification_status = False if verification is None else verification.status
-            print("Levels_status:", Levels_status)
+            # print("Levels_status:", Levels_status)
             await db_disconnect()
             data = [{
                 "img_only_status": image_share_status,
