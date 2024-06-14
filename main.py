@@ -17,13 +17,13 @@ class DiscordBot(commands.Bot):
 
     async def db_connect(self):
         if not self.db.is_connected():
-            print("Connecting to database...")
+            print("main.py Connecting to database...")
             await self.db.connect()
 
     async def db_disconnect(self):
         if self.db.is_connected():
             await self.db.disconnect()
-            print("Disconnected from database")
+            print("main.py Disconnected from database")
 
     async def on_ready(self):
         await bot.tree.sync()
