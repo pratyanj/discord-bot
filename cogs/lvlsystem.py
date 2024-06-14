@@ -166,9 +166,9 @@ class Level_System(commands.Cog):
             card_right_shape=[(600,0),(750,200),(900,200),(900,0)]
 
             
-            poppins1 = Font('cogs\src\levelfont.otf', size=30)
-            poppins2 = Font('cogs\src\levelfont.otf', size=50)
-            poppins3 = Font('cogs\src\levelfont.otf', size=65)
+            poppins1 = Font('cogs\\src\\levelfont.otf', size=30)
+            poppins2 = Font('cogs\\src\\levelfont.otf', size=50)
+            poppins3 = Font('cogs\\src\\levelfont.otf', size=65)
             
             
             background.polygon(card_right_shape, color="#00609a")
