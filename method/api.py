@@ -11,7 +11,7 @@ from starlette.responses import RedirectResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-
+import json
 
 from prisma import Prisma
 db = Prisma()
@@ -19,14 +19,14 @@ db = Prisma()
 
 async def db_connect():
     if not db.is_connected():
-        # logging.info("Connecting to database...")
+        print("Connecting to database...")
         await db.connect()
 
 
 async def db_disconnect():
     if db.is_connected():
+        print("Disconnected from database")
         await db.disconnect()
-        # logging.info("Disconnected from database")
 
 CLIENT_ID = config.CLIENT_ID
 CLIENT_SECRET = config.CLIENT_SECRET
@@ -91,11 +91,19 @@ def myAPI(bot: commands.Bot):
     # ------------------------------------------------------------
     @app.get("/available_users", tags=["Dashboard"])
     async def available_users(user_id: int):
+        print("User ID:",user_id)
         try:
             try:
-                user = db.collection("dashboard_user").document(
-                    str(user_id)).get()
-                return user.to_dict()
+                await db_connect()
+                server = await db.dashboarduser.find_first(where={"user_id": user_id})
+                print(server)
+                await db_disconnect()
+                print(server)
+                user_json ={
+                    'user':json.loads(server.users),
+                    'guild':json.loads(server.guilds)
+                }
+                return user_json
             except:
                 raise HTTPException(status_code=401, detail="User not found")
         except Exception as e:
@@ -157,8 +165,23 @@ def myAPI(bot: commands.Bot):
 
         data = {"user": user_data, "guilds": guilds}
         try:
-            database = db.collection("dashboard_user")
-            database.document(str(user_data["id"])).set(data)
+            await db_connect()
+            database = await db.dashboarduser.find_unique(where={"user_id": int(user_data["id"])})
+            if database is None:
+                update = await db.dashboarduser.create(data={
+                'user_id': int(user_data["id"]),
+                'guilds': json.dumps(guilds),  # Ensure guilds is stored as JSON string if required
+                'users': json.dumps(user_data) # Ensure users is stored as JSON string if required
+                    })
+                print("update:",update)
+                await db_disconnect()
+            else:
+                update = await db.dashboarduser.update(where={'user_id': int(user_data["id"])}, data={
+                'guilds': json.dumps(guilds),
+                'users': json.dumps(user_data)
+                })
+                print("update:",update)
+                await db_disconnect()
         except Exception as e:
             print("Error in database connection:", e)
 
