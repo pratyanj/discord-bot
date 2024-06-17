@@ -154,4 +154,11 @@ model membercount{
   Total_Members       BigInt
   Online_Members      BigInt
   Bots                BigInt 
+
+}
+model DashboardUSER {
+  ID                  Int     @id @default(autoincrement())
+  user_id             BigInt  @unique
+  guilds              String
+  users               String
 }
