@@ -58,7 +58,7 @@ class WelcomeLeaveCog(commands.Cog):
                 description=f"{member.guild.name} welcome message system is not enabled.",
                 color=self.Mcolor
             )
-            await member.guild.get_channel(ss.log_channel).send(embed=em)
+            await member.guild.get_channel(int(ss.log_channel)).send(embed=em)
             return
 
         if server.channel_id == 0:
