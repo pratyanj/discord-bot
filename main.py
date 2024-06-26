@@ -1,10 +1,10 @@
 import discord
 from discord.ext import commands
 import asyncio
+import api
 import config
 import os
 
-from method import  addRole, api
 from prisma import Prisma
 from fastapi import FastAPI
 import threading
@@ -79,10 +79,6 @@ class DiscordBot(commands.Bot):
             print(f"User: {message.author}\nMessage: {message.content}")
         await self.process_commands(message)
         
-    #-------------make cog---------
-    async def on_raw_reaction_add(self, payload):
-        await addRole.TO_member(payload)
-    #-------------make cog---------
 
     async def get_prefix(self, message:discord.Message):
         default_prefix = "$"
