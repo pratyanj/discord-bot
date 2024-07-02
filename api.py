@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import json
 
+from cogs import lvlsystem
 from prisma import Prisma
 db = Prisma()
 
@@ -692,6 +693,46 @@ def myAPI(bot: commands.Bot):
                 return {"message": f"Level up channel set to {channel.name}"}
         else:
             return f"{guild} is not a valid server id"
+    
+    @app.post("/add_xp", tags=["Level system"])
+    async def add_xp(guild: int, user: int, xp: int):
+        Guild = bot.get_guild(guild)
+        if Guild:
+            amount = xp
+            if amount <= 0:
+                return ({"message":'Parameter "amount" was less than or equal to zero. The minimum value is 1'})
+            await db_connect()
+            userdb = await db.userslevel.find_first(where={"server_id": guild, "user_id": user})
+            if userdb == None:
+                await db_disconnect()
+                return HTTPException(status_code=404 , detail = f"User not found in database")
+            else:
+                
+                if userdb.xp >= lvlsystem.MAX_XP:
+                    print("Max xp reached")
+                    await db_disconnect()
+                    return
+                else:
+                        new_total_xp = userdb.xp + amount
+                        new_total_xp = new_total_xp if new_total_xp <= lvlsystem.MAX_XP else lvlsystem.MAX_XP
+                        if new_total_xp in lvlsystem.LEVELS_AND_XP.values():
+                            for level, xp_needed in lvlsystem.LEVELS_AND_XP.items():
+                                if new_total_xp == xp_needed:
+                                    maybe_new_level = int(level)
+                        else:
+                            for level, xp_needed in lvlsystem.LEVELS_AND_XP.items():
+                                if 0 <= new_total_xp <= xp_needed:
+                                    level = int(level)
+                                    level -= 1
+                                    if level < 0:
+                                        level = 0
+                                    maybe_new_level = level
+                                    break
+                        
+                        update = await db.userslevel.update(where={"ID": userdb.ID}, data={"xp": new_total_xp, "level":maybe_new_level})
+                        await db_disconnect()
+                        return ({"message": f"User {user} has {new_total_xp} xp and is now level {maybe_new_level}"})
+    
     # --------------------------------------------------------------------------------
     # ----------------------------YOUTUBE-------------------------------------------
     @app.get("/GET_YT_SUB_channels_lst/", tags=["youtube"])

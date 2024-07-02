@@ -3,7 +3,113 @@ from discord.ext import commands, tasks
 from prisma import Prisma
 import random
 from easy_pil import *
+from typing import Final, ClassVar
 
+LEVELS_AND_XP: Final = {
+            '0': 0,
+            '1': 100,
+            '2': 255,
+            '3': 475,
+            '4': 770,
+            '5': 1150,
+            '6': 1625,
+            '7': 2205,
+            '8': 2900,
+            '9': 3720,
+            '10': 4675,
+            '11': 5775,
+            '12': 7030,
+            '13': 8450,
+            '14': 10045,
+            '15': 11825,
+            '16': 13800,
+            '17': 15980,
+            '18': 18375,
+            '19': 20995,
+            '20': 23850,
+            '21': 26950,
+            '22': 30305,
+            '23': 33925,
+            '24': 37820,
+            '25': 42000,
+            '26': 46475,
+            '27': 51255,
+            '28': 56350,
+            '29': 61770,
+            '30': 67525,
+            '31': 73625,
+            '32': 80080,
+            '33': 86900,
+            '34': 94095,
+            '35': 101675,
+            '36': 109650,
+            '37': 118030,
+            '38': 126825,
+            '39': 136045,
+            '40': 145700,
+            '41': 155800,
+            '42': 166355,
+            '43': 177375,
+            '44': 188870,
+            '45': 200850,
+            '46': 213325,
+            '47': 226305,
+            '48': 239800,
+            '49': 253820,
+            '50': 268375,
+            '51': 283475,
+            '52': 299130,
+            '53': 315350,
+            '54': 332145,
+            '55': 349525,
+            '56': 367500,
+            '57': 386080,
+            '58': 405275,
+            '59': 425095,
+            '60': 445550,
+            '61': 466650,
+            '62': 488405,
+            '63': 510825,
+            '64': 533920,
+            '65': 557700,
+            '66': 582175,
+            '67': 607355,
+            '68': 633250,
+            '69': 659870,
+            '70': 687225,
+            '71': 715325,
+            '72': 744180,
+            '73': 773800,
+            '74': 804195,
+            '75': 835375,
+            '76': 867350,
+            '77': 900130,
+            '78': 933725,
+            '79': 968145,
+            '80': 1003400,
+            '81': 1039500,
+            '82': 1076455,
+            '83': 1114275,
+            '84': 1152970,
+            '85': 1192550,
+            '86': 1233025,
+            '87': 1274405,
+            '88': 1316700,
+            '89': 1359920,
+            '90': 1404075,
+            '91': 1449175,
+            '92': 1495230,
+            '93': 1542250,
+            '94': 1590245,
+            '95': 1639225,
+            '96': 1689200,
+            '97': 1740180,
+            '98': 1792175,
+            '99': 1845195,
+            '100': 1899250
+        }
+MAX_XP: Final = LEVELS_AND_XP['100']
+MAX_LEVEL: Final = 100        
 
 class Level_System(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -20,8 +126,28 @@ class Level_System(commands.Cog):
         if self.db.is_connected():
             await self.db.disconnect()
             # print("Disconnected from database")
+    
+    def _find_level(current_total_xp: int) -> int:
+            """
+            Find the level associated with the current total xp
+            """
+        # check if the current xp matches the xp_needed exactly
+            if current_total_xp in LEVELS_AND_XP.values():
+                for level, xp_needed in LEVELS_AND_XP.items():
+                    if current_total_xp == xp_needed:
+                        return int(level)
+            else:
+                for level, xp_needed in LEVELS_AND_XP.items():
+                    if 0 <= current_total_xp <= xp_needed:
+                        level = int(level)
+                        level -= 1
+                        if level < 0:
+                            level = 0
+                        return level
+    
     @commands.Cog.listener()
     async def on_message(self, message:discord.Message):
+        
         # print("_____________________LVLsystem______________________")
         await self.db_connect()
         ss = await self.db.server.find_unique(where={"server_id": message.guild.id})
@@ -74,7 +200,11 @@ class Level_System(commands.Cog):
         except:
             xp = 0
             level = 0
-
+        if user.xp >= MAX_XP:
+            print("Max xp reached")
+            await self.db_disconnect()
+            return
+        
         if level < 5:
             print("Level is less than 5")
             xp += random.randint(1, 5)
@@ -89,9 +219,15 @@ class Level_System(commands.Cog):
                 print(f"xp is increased to {xp}")
                 await self.db.userslevel.update(where={"ID": user.ID}, data={"xp": xp})
                 await self.db_disconnect()
+            else:
+                xp += int(rand)
+                print(f"xp is increased to {xp}")
+                await self.db.userslevel.update(where={"ID": user.ID}, data={"xp": xp})
+                await self.db_disconnect()
+                
         print(f"XP: {xp}, Level: {level}")
 
-        if xp >= 100:
+        if xp >= LEVELS_AND_XP[str(level)]:
             await self.db_connect()
             level += 1
             await self.db.userslevel.update(where={"ID": user.ID}, data={"level": level, "xp": 0})
@@ -122,8 +258,10 @@ class Level_System(commands.Cog):
                             await message.guild.get_channel(sys.level_up_channel_id).sent(embed=em)
             em1 = discord.Embed(description=f"{msg}",color=self.Mcolor)
             if sys.level_up_channel_id == 0:
+                print("|Level stting|**Level up channel is not set**")
                 await message.channel.send(embed=em1)
             else:
+                print("|Level stting|**Level up channel is set**")
                 await message.guild.get_channel(sys.level_up_channel_id).sent(embed=em1)
 
     
@@ -146,9 +284,10 @@ class Level_System(commands.Cog):
                 "name": f'{member.name}',
                 "xp": xp,
                 "level": level,
-                "next_level_xp": 100,
-                "percent": xp,
+                "next_level_xp": LEVELS_AND_XP[str(level)],
+                "percent":(xp/LEVELS_AND_XP[str(level)])*100,
             }
+            print("persontage:",userdata["percent"])
             user_lvl = await self.db.userslevel.find_many(where={"server_id": ctx.guild.id}, order=[{"level": "desc"}, {"xp": "desc"}], take=10)
             member_rank = int
             rank = 1
@@ -358,6 +497,114 @@ class Level_System(commands.Cog):
             em = discord.Embed(description=f"Level system Channel has been set to `{channel.name}`",color=self.Mcolor)
             await self.db_disconnect()
             await ctx.send(embed=em)
-             
+            
+    @commands.hybrid_command(name='reduse_level', help='Set status of level system')
+    @commands.has_permissions(administrator=True)
+    async def reduce_lvl(self, ctx: commands.Context,member:discord.Member,amount: int):
+        '''
+        Reduse Level of user. This also changes their xp to 0 so it matches the associated Level
+        '''
+        if amount <= 0:
+            raise ctx.send('Parameter "amount" was less than or equal to zero. The minimum value is 1')
+        
+        await self.db_connect()
+        md = await self.db.userslevel.find_first(where={"server_id": ctx.guild.id, "user_id": member.id})
+        if md != None:
+            if md.level >= MAX_LEVEL:
+                    em = discord.Embed(description="Max xp reached",color=self.Mcolor)
+                    await ctx.send(embed=em)
+                    await self.db_disconnect()
+                    return
+            else:
+                await self.db.userslevel.update(where={"ID": md.ID}, data={"xp": 0, "level":amount})
+                await self.db_disconnect()
+                em = discord.Embed(description=f"User {member.mention} has now `level {amount}`",color=self.Mcolor)
+                await ctx.send(embed=em)
+    
+    @commands.hybrid_command(name='add_xp',help='Add xp to a user')
+    @commands.has_permissions(administrator=True)
+    async def add_xp(self, ctx: commands.Context,member:discord.Member,amount: int) -> None:
+        """
+        Give XP to a member. This also changes their level so it matches the associated XP
+        """
+        if amount <= 0:
+            raise ctx.send('Parameter "amount" was less than or equal to zero. The minimum value is 1')
+        
+        await self.db_connect()
+        md = await self.db.userslevel.find_first(where={"server_id": ctx.guild.id, "user_id": member.id})
+        if md != None:
+            if md.xp >= MAX_XP:
+                em = discord.Embed(description="Max xp reached",color=self.Mcolor)
+                await ctx.send(embed=em)
+                await self.db_disconnect()
+                return
+            else:
+                new_total_xp = md.xp + amount
+                new_total_xp = new_total_xp if new_total_xp <= MAX_XP else MAX_XP
+                
+                if new_total_xp in LEVELS_AND_XP.values():
+                    for level, xp_needed in LEVELS_AND_XP.items():
+                        if new_total_xp == xp_needed:
+                            maybe_new_level = int(level)
+                else:
+                    for level, xp_needed in LEVELS_AND_XP.items():
+                        if 0 <= new_total_xp <= xp_needed:
+                            level = int(level)
+                            level -= 1
+                            if level < 0:
+                                level = 0
+                            maybe_new_level = level
+                            new_total_xp = 0
+                            break
+                
+                update = await self.db.userslevel.update(where={"ID": md.ID}, data={"xp": new_total_xp, "level":maybe_new_level})
+                await self.db_disconnect()
+                em = discord.Embed(description=f"User {member.mention} has been given `{amount}` xp and is now level `{maybe_new_level}`",color=self.Mcolor)
+                await ctx.send(embed=em)
+        
 async def setup(bot: commands.Bot):
     await bot.add_cog(Level_System(bot))
+
+class MemberGuildInfo:
+    """Helper class for :class:`AnnouncementMember`
+    
+        .. added:: v1.1.0 (moved from :class:`AnnouncementMember`, was just :class:`Guild`)
+    """
+    icon_url: ClassVar[str] = '[$g_icon_url]'
+    id: ClassVar[str] = '[$g_id]'
+    name: ClassVar[str] = '[$g_name]'
+
+class MemberInfo:
+    """Helper class for :class:`LevelUpAnnouncement`
+    
+        .. added:: v0.0.2
+        .. changes::
+            v1.1.0
+                Replaced the guild class. Added it as a variable instead (Guild class is now separate)
+                Added :attr:`display_avatar_url`
+                Added :attr:`banner_url`
+    """
+    avatar_url: ClassVar[str] = '[$avatar_url]'
+    banner_url: ClassVar[str] = '[$banner_url]'
+    created_at: ClassVar[str] = '[$created_at]'
+    default_avatar_url: ClassVar[str] = '[$default_avatar_url]'
+    discriminator: ClassVar[str] = '[$discriminator]'
+    display_avatar_url: ClassVar[str] = '[$display_avatar_url]' # Guild avatar if they have one set
+    display_name: ClassVar[str] = '[$display_name]'
+    id: ClassVar[str] = '[$id]'
+    joined_at: ClassVar[str] = '[$joined_at]'
+    mention: ClassVar[str] = '[$mention]'
+    name: ClassVar[str] = '[$name]'
+    nick: ClassVar[str] = '[$nick]'
+    
+    Guild: ClassVar[MemberGuildInfo] = MemberGuildInfo()
+
+
+'''TO-DO
+-add no xp role 
+-add no xp channel 
+-add no_xp_role api/cmd
+-add no_xp_channel api/cmd
+- stack_awards(If this is True, when the member levels up the assigned role award will be applied. If False, the previous role award will be removed and the level up assigned role will also be applied)
+-announce_level_up(If True, level up messages will be sent when a member levels up)
+'''
