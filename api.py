@@ -733,6 +733,27 @@ def myAPI(bot: commands.Bot):
                         await db_disconnect()
                         return ({"message": f"User {user} has {new_total_xp} xp and is now level {maybe_new_level}"})
     
+    @app.post("/remove_level", tags=["Level system"])
+    async def remove_level(guild: int, user: int, level: int):
+        Guild = bot.get_guild(guild)
+        if Guild:
+            amount = level
+            if amount <= 0:
+                return ({"message":'Parameter "Level" was less than or equal to zero. The minimum value is 1'})
+            await db_connect()
+            userdb = await db.userslevel.find_first(where={"server_id": guild, "user_id": user})
+            if userdb == None:
+                await db_disconnect()
+                return HTTPException(status_code=404 , detail = f"User not found in database")
+            else:
+                if userdb.level >= lvlsystem.MAX_LEVEL:
+                    await db_disconnect()
+                    return ({"message": f"Max xp reached"})
+                else:
+                    await db.userslevel.update(where={"ID": userdb.ID}, data={"xp": 0, "level":amount})
+                    await db_disconnect()
+                    return ({"message": f"User {user} has {userdb.xp} xp and is now level {userdb.level}"})
+            
     # --------------------------------------------------------------------------------
     # ----------------------------YOUTUBE-------------------------------------------
     @app.get("/GET_YT_SUB_channels_lst/", tags=["youtube"])
