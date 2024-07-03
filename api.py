@@ -674,6 +674,7 @@ def myAPI(bot: commands.Bot):
         else:
             return f"{guild} is not a valid server id"
     
+    # @app.post("/LVL_set_channel/",dependencies=[Depends(check_api_key)])
     @app.post("/LVL_set_channel/", tags=["Level system"])
     async def LVL_set_channel(guild: int, channel:int):
         Guild = bot.get_guild(guild)
@@ -694,6 +695,7 @@ def myAPI(bot: commands.Bot):
         else:
             return f"{guild} is not a valid server id"
     
+    # @app.post("add_xp",dependencies=[Depends(check_api_key)])
     @app.post("/add_xp", tags=["Level system"])
     async def add_xp(guild: int, user: int, xp: int):
         Guild = bot.get_guild(guild)
@@ -733,6 +735,7 @@ def myAPI(bot: commands.Bot):
                         await db_disconnect()
                         return ({"message": f"User {user} has {new_total_xp} xp and is now level {maybe_new_level}"})
     
+    # @app.post("/remove_level",dependencies=[Depends(check_api_key)])
     @app.post("/remove_level", tags=["Level system"])
     async def remove_level(guild: int, user: int, level: int):
         Guild = bot.get_guild(guild)
@@ -753,7 +756,92 @@ def myAPI(bot: commands.Bot):
                     await db.userslevel.update(where={"ID": userdb.ID}, data={"xp": 0, "level":amount})
                     await db_disconnect()
                     return ({"message": f"User {user} has {userdb.xp} xp and is now level {userdb.level}"})
-            
+        
+        else:
+            return HTTPException(status_code=404, detail=f"{guild} is not a valid server id")  
+
+    # @app.post("/remove_no_xp_role",dependencies=[Depends(check_api_key)])
+    @app.post("/remove_no_xp_role", tags=["Level system"])
+    async def remove_no_xp_role(guild: int, role: int):
+        Guild = bot.get_guild(guild)
+        if Guild:
+            await db.connect()
+            no_xp_role_db = await db.noxprole.find_first(where={"server_id": guild, "role_id": role})
+            if no_xp_role_db == None:
+                await db.disconnect()
+                return HTTPException(status_code=404 , detail = f"Role not found in database")
+            else:
+                await db.noxprole.delete(where={"ID": no_xp_role_db.ID})
+                await db.disconnect()
+                return {"message": f"Role {role} removed from no xp role list"}
+    
+    # @app.post("/add_no_xp_role",dependencies=[Depends(check_api_key)])
+    @app.post("/add_no_xp_role", tags=["Level system"])
+    async def add_no_xp_role(guild: int, role: int):
+        Guild = bot.get_guild(guild)
+        if Guild:
+            await db.connect()
+            DB = await db.noxprole.find_first(where={"server_id": guild, "role_id": role})
+            if DB == None:
+                await db.noxprole.create(data={"server_id": guild, "role_id": role, "role_name": role})
+                await db.disconnect()
+                return ({"message": f"Role {role} added to no xp role list"})
+            else:
+                await db.disconnect()
+                return {"message": f"Role {role} already in no xp role list"}
+        else:
+            return HTTPException(status_code=404, detail=f"{guild} is not a valid server id")
+    
+    # @app.post("/remove_no_xp_role",tags = ["Level system"])
+    @app.post("/remove_no_xp_role", tags=["Level system"])
+    async def remove_no_xp_rolez(guild: int, role: int):
+        Guild = bot.get_guild(guild)
+        if Guild:
+            await db.connect()
+            DB = await db.noxprole.find_first(where={"server_id": guild, "role_id": role})
+            if DB == None:
+                await db.disconnect()
+                return ({"message": f"Role {role} not found in database"})
+            else:
+                await db.noxprole.delete(where={"ID": DB.ID})
+                await db.disconnect()
+                return {"message": f"Role {role} already in no xp role list"}
+        else:
+            return HTTPException(status_code=404, detail=f"{guild} is not a valid server id")
+
+    @app.post("/add_noxpchannel", tags=["Level system"])
+    async def add_noxpchannel(guild: int, channel: int):
+        Guild = bot.get_guild(guild)
+        if Guild:
+            await db.connect()
+            DB = await db.noxpchannel.find_first(where={"server_id": guild, "channel_id": channel})
+            if DB == None:
+                await db.noxpchannel.create(data={"server_id": guild, "channel_id": channel, "channel_name": channel})
+                await db.disconnect()
+                return ({"message": f"Channel {channel} added to no xp channel list"})
+            else:
+                await db.disconnect()
+                return {"message": f"Channel {channel} already in no xp channel list"}
+        else:
+            return HTTPException(status_code=404, detail=f"{guild} is not a valid server id")
+
+    # @app.post("/remove_noxpchannel",tags = ["Level system"])
+    @app.post("/remove_noxpchannel", tags=["Level system"])
+    async def remove_noxpchannel(guild: int, channel: int):
+        Guild = bot.get_guild(guild)
+        if Guild:
+            await db.connect()
+            DB = await db.noxpchannel.find_first(where={"server_id": guild, "channel_id": channel})
+            if DB == None:
+                await db.disconnect()
+                return ({"message": f"Channel {channel} not found in database"})
+            else:
+                await db.noxpchannel.delete(where={"ID": DB.ID})
+                await db.disconnect()
+                return {"message": f"Channel {channel} already in no xp channel list"}
+        else:
+            return HTTPException(status_code=404, detail=f"{guild} is not a valid server id")
+    
     # --------------------------------------------------------------------------------
     # ----------------------------YOUTUBE-------------------------------------------
     @app.get("/GET_YT_SUB_channels_lst/", tags=["youtube"])
