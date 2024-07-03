@@ -780,10 +780,11 @@ def myAPI(bot: commands.Bot):
     async def add_no_xp_role(guild: int, role: int):
         Guild = bot.get_guild(guild)
         if Guild:
+            rolle = Guild.get_role(role)
             await db.connect()
             DB = await db.noxprole.find_first(where={"server_id": guild, "role_id": role})
             if DB == None:
-                await db.noxprole.create(data={"server_id": guild, "role_id": role, "role_name": role})
+                await db.noxprole.create(data={"server_id": guild, "role_id": role, "role_name": rolle.name})
                 await db.disconnect()
                 return ({"message": f"Role {role} added to no xp role list"})
             else:
@@ -796,6 +797,7 @@ def myAPI(bot: commands.Bot):
     @app.post("/remove_no_xp_role", tags=["Level system"])
     async def remove_no_xp_rolez(guild: int, role: int):
         Guild = bot.get_guild(guild)
+        
         if Guild:
             await db.connect()
             DB = await db.noxprole.find_first(where={"server_id": guild, "role_id": role})
@@ -813,10 +815,11 @@ def myAPI(bot: commands.Bot):
     async def add_noxpchannel(guild: int, channel: int):
         Guild = bot.get_guild(guild)
         if Guild:
+            chann = Guild.get_channel(channel)
             await db.connect()
             DB = await db.noxpchannel.find_first(where={"server_id": guild, "channel_id": channel})
             if DB == None:
-                await db.noxpchannel.create(data={"server_id": guild, "channel_id": channel, "channel_name": channel})
+                await db.noxpchannel.create(data={"server_id": guild, "channel_id": channel, "channel_name": chann.name})
                 await db.disconnect()
                 return ({"message": f"Channel {channel} added to no xp channel list"})
             else:
@@ -861,6 +864,7 @@ def myAPI(bot: commands.Bot):
                 return HTTPException(status_code=404, detail=f"{guild} not found in database")
         else:
             return HTTPException(status_code=404, detail=f"{guild} is not a valid server id")
+    
     # @app.post("/youtube_notification_status/",dependencies=[Depends(check_api_key)])
     @app.post("/youtube_system_status/", tags=["youtube"])
     async def youtube_system_status(guild: int, status: bool):
