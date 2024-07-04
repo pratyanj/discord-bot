@@ -127,24 +127,6 @@ class Level_System(commands.Cog):
             await self.db.disconnect()
             # print("Disconnected from database")
     
-    def _find_level(current_total_xp: int) -> int:
-            """
-            Find the level associated with the current total xp
-            """
-        # check if the current xp matches the xp_needed exactly
-            if current_total_xp in LEVELS_AND_XP.values():
-                for level, xp_needed in LEVELS_AND_XP.items():
-                    if current_total_xp == xp_needed:
-                        return int(level)
-            else:
-                for level, xp_needed in LEVELS_AND_XP.items():
-                    if 0 <= current_total_xp <= xp_needed:
-                        level = int(level)
-                        level -= 1
-                        if level < 0:
-                            level = 0
-                        return level
-    
     @commands.Cog.listener()
     async def on_message(self, message:discord.Message):
         
@@ -160,6 +142,26 @@ class Level_System(commands.Cog):
             await self.db_disconnect()
             # print("Message is a command or a bot")
             return
+        # -------------On xp role-------------------
+        no_xp = await self.db.noxprole.find_many(where={"server_id": message.guild.id})
+        if no_xp!= None:
+            for i in no_xp:
+                print("role id: ",i.role_id)
+                print("message author roles: ",message.author.roles)
+                if i.role_id in [role.id for role in message.author.roles]:                    
+                    print("User has xp role")
+                    await self.db_disconnect()
+                    return
+        # -------------On xp role-------------------
+        # -------------on xp channel-------------------
+        no_xp_channel_db = await self.db.noxpchannel.find_many(where={"server_id": message.guild.id})
+        if no_xp_channel_db!= None:
+            for i in no_xp_channel_db:
+                if i.channel_id == message.channel.id:
+                    await self.db_disconnect()
+                    print("User has xp channel")
+                    return
+        # -------------on xp channel-------------------
         author = message.author
         guild = message.guild
         print("user:", author)
@@ -168,6 +170,8 @@ class Level_System(commands.Cog):
         print(f"user lvl data:/n{user}")
         sys = await self.db.levelsetting.find_unique(where={"server_id": message.guild.id})
         print(f"Lvl system:/n{sys}")
+        
+        # iF SRVER HAS NO LEVEL SYSTEM THEN CREATE ONE
         if sys == None:
             create_sys = await self.db.levelsetting.create(data={"server_id": message.guild.id, "status": True, "level_up_channel_id": 0, "level_up_channel_name": ''})
             embed = discord.Embed(
@@ -176,6 +180,7 @@ class Level_System(commands.Cog):
             await self.db_disconnect()
             return
 
+        # IF USER IS IN DATABASE THEN UPDATE XP
         if user == None:
             create_user = await self.db.userslevel.create(data={"server_id": message.guild.id, "user_id": author.id, "user_name": author.name, "level": 0, "xp": 1})
             em = discord.Embed(title="Level system",description=f"New user add to lvl system:`{author.id}`", color=self.Mcolor)
@@ -561,7 +566,72 @@ class Level_System(commands.Cog):
                 await self.db_disconnect()
                 em = discord.Embed(description=f"User {member.mention} has been given `{amount}` xp and is now level `{maybe_new_level}`",color=self.Mcolor)
                 await ctx.send(embed=em)
-        
+      
+    @commands.hybrid_command(name='set on xp role',help='role with this user will not gain XP')
+    @commands.has_permissions(administrator=True)
+    async def add_no_xp_role(self, ctx: commands.Context,role:discord.Role):
+        '''
+        Set role with this user will not gain XP
+        '''
+        await self.db_connect()
+        DB = await self.db.noxprole.find_first(where={"server_id":ctx.guild.id, "role_id": role})
+        if DB == None:
+            await self.db.noxprole.create(data={"server_id": ctx.guild.id, "role_id": role, "role_name": role.name})
+            await self.db.disconnect()
+            embed = discord.Embed(description=f"Role {role.name} added to no xp role list", color=self.Mcolor)
+            await ctx.send(embed=embed)        
+        else:
+            await self.db_disconnect()
+            ctx.send(f"Role {role.name} already in no xp role list")
+    
+    @commands.hybrid_command(name='remove_no_xp_role',help='remove role from no xp role list')
+    @commands.has_permissions(administrator=True)
+    async def remove_no_xp_role(self, ctx: commands.Context,role:discord.Role):
+        '''
+        Remove role from no xp role list
+        '''
+        await self.db_connect()
+        DB = await self.db.noxprole.find_first(where={"server_id":ctx.guild.id, "role_id": role})
+        if DB == None:
+            await self.db_disconnect()
+            ctx.send(f"Role {role.name} not in no xp role list")
+        else:
+            await self.db.noxprole.delete(where={"ID": DB.ID})
+            await self.db_disconnect()
+            ctx.send(f"Role {role.name} removed from no xp role list")
+    
+    @commands.hybrid_command(name='add on xp channel',help='In this channel user will not gain XP')
+    @commands.has_permissions(administrator=True)
+    async def add_on_xp_channel(self, ctx: commands.Context,channel:discord.TextChannel):
+        '''
+        Set channel with this user will not gain XP
+        '''
+        await self.db_connect()
+        DB = await self.db.noxpchannel.find_first(where={"server_id":ctx.guild.id, "channel_id": channel.id})
+        if DB == None:
+            await self.db.noxpchannel.create(data={"server_id": ctx.guild.id, "channel_id": channel.id, "channel_name": channel.name})
+            await self.db.disconnect()
+            embed = discord.Embed(description=f"Channel {channel.name} added to on xp channel list", color=self.Mcolor)
+            await ctx.send(embed=embed)
+        else:
+            await self.db_disconnect()
+            ctx.send(f"Channel {channel.name} already in on xp channel list")
+
+    @commands.hybrid_command(name='remove_on_xp_channel',help='remove channel from on xp channel list')
+    @commands.has_permissions(administrator=True)
+    async def remove_on_xp_channel(self, ctx: commands.Context,channel:discord.TextChannel):
+        '''
+        Remove channel from on xp channel list
+        '''
+        await self.db_connect()
+        DB = await self.db.noxpchannel.find_first(where={"server_id":ctx.guild.id, "channel_id": channel.id})
+        if DB == None:
+            await self.db_disconnect()
+            ctx.send(f"Channel {channel.name} not in on xp channel list")
+        else:
+            await self.db.noxpchannel.delete(where={"ID": DB.ID})
+            await self.db_disconnect()
+            ctx.send(f"Channel {channel.name} removed from on xp channel list")
 async def setup(bot: commands.Bot):
     await bot.add_cog(Level_System(bot))
 
