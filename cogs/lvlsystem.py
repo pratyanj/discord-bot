@@ -567,7 +567,7 @@ class Level_System(commands.Cog):
                 em = discord.Embed(description=f"User {member.mention} has been given `{amount}` xp and is now level `{maybe_new_level}`",color=self.Mcolor)
                 await ctx.send(embed=em)
       
-    @commands.hybrid_command(name='set on xp role',help='role with this user will not gain XP')
+    @commands.hybrid_command(name='set_on_xp_role',help='role with this user will not gain XP')
     @commands.has_permissions(administrator=True)
     async def add_no_xp_role(self, ctx: commands.Context,role:discord.Role):
         '''
@@ -600,7 +600,7 @@ class Level_System(commands.Cog):
             await self.db_disconnect()
             ctx.send(f"Role {role.name} removed from no xp role list")
     
-    @commands.hybrid_command(name='add on xp channel',help='In this channel user will not gain XP')
+    @commands.hybrid_command(name='add_on_xp-channel',help='In this channel user will not gain XP')
     @commands.has_permissions(administrator=True)
     async def add_on_xp_channel(self, ctx: commands.Context,channel:discord.TextChannel):
         '''
@@ -632,6 +632,7 @@ class Level_System(commands.Cog):
             await self.db.noxpchannel.delete(where={"ID": DB.ID})
             await self.db_disconnect()
             ctx.send(f"Channel {channel.name} removed from on xp channel list")
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(Level_System(bot))
 
