@@ -15,15 +15,7 @@ class DiscordBot(commands.Bot):
         super().__init__(command_prefix=command_prefix, intents=discord.Intents.all(),help_command=None)
         self.db = Prisma()
 
-    async def db_connect(self):
-        if not self.db.is_connected():
-            print("main.py Connecting to database...")
-            await self.db.connect()
-
-    async def db_disconnect(self):
-        if self.db.is_connected():
-            await self.db.disconnect()
-            print("main.py Disconnected from database")
+    from database.connection import db_connect, db_disconnect
 
     async def on_ready(self):
         await bot.tree.sync()
@@ -138,19 +130,22 @@ bot = DiscordBot(command_prefix="$", intents=intents)
 # FastAPI setup and run
 def run_fastapi_app():
     import uvicorn
-    uvicorn.run(api.myAPI(bot), host="0.0.0.0", port=8001)
+    app = api.myAPI(bot)
+    uvicorn.run(app, host="0.0.0.0", port=8001)
 
 def run_discord_bot():
     bot.run(config.TOKEN)
 
+if __name__ == "__main__":
+    run_fastapi_app()
 # Create threads for Discord bot and FastAPI app
-discord_thread = threading.Thread(target=run_discord_bot)
-fastapi_thread = threading.Thread(target=run_fastapi_app)
+# discord_thread = threading.Thread(target=run_discord_bot)
+# fastapi_thread = threading.Thread(target=run_fastapi_app)
 
-# Start both threads
-discord_thread.start()
-fastapi_thread.start()
+# # Start both threads
+# # discord_thread.start()
+# fastapi_thread.start()
 
-# Wait for both threads to finish
-discord_thread.join()
-fastapi_thread.join()
+# # Wait for both threads to finish
+# # discord_thread.join()
+# fastapi_thread.join()
