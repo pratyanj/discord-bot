@@ -11,16 +11,7 @@ class User_Member_Count(commands.Cog):
         self.Mcolor = discord.Colour.from_rgb(0, 97, 146)
         # self.member_counts.start()
 
-    async def db_connect(self):
-        if not self.db.is_connected():
-            # print("Connecting to database...")
-            await self.db.connect()
-
-    async def db_disconnect(self):
-        if self.db.is_connected():
-            await self.db.disconnect()
-            # print("Disconnected from database")
-    
+    from database.connection import db_connect, db_disconnect
     
     async def update_member_count(self, server_id):
         print(f"Updating member count for server: {server_id}")

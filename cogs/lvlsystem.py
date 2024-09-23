@@ -116,16 +116,7 @@ class Level_System(commands.Cog):
         self.bot = bot
         self.db = Prisma()
         self.Mcolor = discord.Colour.from_rgb(0, 97, 146)
-
-    async def db_connect(self):
-        if not self.db.is_connected():
-            # print("Connecting to database...")
-            await self.db.connect()
-
-    async def db_disconnect(self):
-        if self.db.is_connected():
-            await self.db.disconnect()
-            # print("Disconnected from database")
+    from database.connection import db_connect, db_disconnect
     
     @commands.Cog.listener()
     async def on_message(self, message:discord.Message):
@@ -180,7 +171,7 @@ class Level_System(commands.Cog):
             await self.db_disconnect()
             return
 
-        # IF USER IS IN DATABASE THEN UPDATE XP
+        # IF USER IS NOT IN DATABASE THEN CREATE ONE
         if user == None:
             create_user = await self.db.userslevel.create(data={"server_id": message.guild.id, "user_id": author.id, "user_name": author.name, "level": 0, "xp": 1})
             em = discord.Embed(title="Level system",description=f"New user add to lvl system:`{author.id}`", color=self.Mcolor)
@@ -188,7 +179,8 @@ class Level_System(commands.Cog):
             await self.db_disconnect()
             # print(f"New member add to lvl system:{author.id}")
             return
-
+        
+        # IF LEVEL SYSTEM IS OFF THEN RETURN
         if sys.status == False:
             # print("Level system is off")
             # print(f"serverlogchannel:{ss.log_channel}")
@@ -567,7 +559,7 @@ class Level_System(commands.Cog):
                 em = discord.Embed(description=f"User {member.mention} has been given `{amount}` xp and is now level `{maybe_new_level}`",color=self.Mcolor)
                 await ctx.send(embed=em)
       
-    @commands.hybrid_command(name='set_on_xp_role',help='role with this user will not gain XP')
+    @commands.hybrid_command(name='set_no_xp_role',help='role with this user will not gain XP')
     @commands.has_permissions(administrator=True)
     async def add_no_xp_role(self, ctx: commands.Context,role:discord.Role):
         '''
@@ -600,9 +592,9 @@ class Level_System(commands.Cog):
             await self.db_disconnect()
             ctx.send(f"Role {role.name} removed from no xp role list")
     
-    @commands.hybrid_command(name='add_on_xp-channel',help='In this channel user will not gain XP')
+    @commands.hybrid_command(name='add_no_xp-channel',help='In this channel user will not gain XP')
     @commands.has_permissions(administrator=True)
-    async def add_on_xp_channel(self, ctx: commands.Context,channel:discord.TextChannel):
+    async def add_no_xp_channel(self, ctx: commands.Context,channel:discord.TextChannel):
         '''
         Set channel with this user will not gain XP
         '''
@@ -617,21 +609,21 @@ class Level_System(commands.Cog):
             await self.db_disconnect()
             ctx.send(f"Channel {channel.name} already in on xp channel list")
 
-    @commands.hybrid_command(name='remove_on_xp_channel',help='remove channel from on xp channel list')
+    @commands.hybrid_command(name='remove_no_xp_channel',help='remove channel from no xp channel list')
     @commands.has_permissions(administrator=True)
-    async def remove_on_xp_channel(self, ctx: commands.Context,channel:discord.TextChannel):
+    async def remove_no_xp_channel(self, ctx: commands.Context,channel:discord.TextChannel):
         '''
-        Remove channel from on xp channel list
+        Remove channel from no xp channel list
         '''
         await self.db_connect()
         DB = await self.db.noxpchannel.find_first(where={"server_id":ctx.guild.id, "channel_id": channel.id})
         if DB == None:
             await self.db_disconnect()
-            ctx.send(f"Channel {channel.name} not in on xp channel list")
+            ctx.send(f"Channel {channel.name} not in no xp channel list")
         else:
             await self.db.noxpchannel.delete(where={"ID": DB.ID})
             await self.db_disconnect()
-            ctx.send(f"Channel {channel.name} removed from on xp channel list")
+            ctx.send(f"Channel {channel.name} removed from no xp channel list")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Level_System(bot))

@@ -14,15 +14,7 @@ class WelcomeLeaveCog(commands.Cog):
             discord.SelectOption(label='Welcome', )
         ]
 
-    async def db_connect(self):
-        if not self.db.is_connected():
-            print("Connecting to database...")
-            await self.db.connect()
-
-    async def db_disconnect(self):
-        if self.db.is_connected():
-            await self.db.disconnect()
-            print("Disconnected from database")
+    from database.connection import db_connect, db_disconnect
 
     @commands.Cog.listener()
     async def on_member_join(self, member):

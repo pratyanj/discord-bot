@@ -7,17 +7,8 @@ class Image_Link_only(commands.Cog):
     def __init__(self, bot:commands.Bot):
         self.bot = bot
         self.db = Prisma()
-    
-    async def db_connect(self):
-        if not self.db.is_connected():
-            print("Connecting to database...")
-            await self.db.connect()
-
-    async def db_disconnect(self):
-        if self.db.is_connected():
-            await self.db.disconnect()
-            print("Disconnected from database")
-       
+    from database.connection import db_connect, db_disconnect
+        
     async def on_message(self, message:discord.Message):
         if not message.author.bot or self.bot:
             return
@@ -27,27 +18,20 @@ class Image_Link_only(commands.Cog):
     async def image_channel(self, message:discord.Message):
         await self.db_connect()
         database = await self.db.imagesonly.find_first(where={"channel_id":message.channel.id,"server_id":message.guild.id})
-        # print("del_msg channel_name:",database)
         await  self.db_disconnect()
         if database == None:
-            # print("No table found for del_msg database not found")
             return
         if not message.author.bot:
         # if message.channel.id in monitored_channel_ids and not message.author.bot:
             if not message.attachments:
-                # print("Message without attachments")
                 # Delete the message if it doesn't have attachments (images)
                 await message.delete()
 
                 # Send a warning message
                 warning_message = f'{message.author.mention}, messages are not allowed here. Please only send your work images.'
                 warning = await message.channel.send(warning_message)
-                # print("warning:",warning)
                 # Schedule the deletion of the warning message after 1 second
                 await asyncio.sleep(5)
-                # print("Deleting warning message")
-                # print("warning.author:",warning.author)
-                # print(bot.user)
                 # Check if the bot is not the author before attempting to delete
                 if warning.author == self.bot.user:
                     await warning.delete()
@@ -64,7 +48,6 @@ class Image_Link_only(commands.Cog):
 
         if not message.content.startswith("http") and not message.content.startswith("https"):
             if not message.author.bot:   
-                    # print("valid link")
                     # Delete the message if it has attachments or doesn't contain a valid link
                     await message.delete()
 
@@ -73,7 +56,6 @@ class Image_Link_only(commands.Cog):
                     warning = await message.channel.send(warning_message)
                     # Schedule the deletion of the warning message after 5 seconds
                     await asyncio.sleep(5)
-                    # print("Deleting warning message")
                     # Check if the bot is not the author before attempting to delete
                     if warning.author == self.bot.user:
                         await warning.delete()

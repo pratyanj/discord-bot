@@ -14,15 +14,7 @@ class Moderation(commands.Cog, name="moderation"):
         self.db = Prisma()
         self.Mcolor = discord.Colour.from_rgb(0, 97, 146)
         
-    async def db_connect(self):
-        if not self.db.is_connected():
-            print("Connecting to database...")
-            await self.db.connect()
-
-    async def db_disconnect(self):
-        if self.db.is_connected():
-            await self.db.disconnect()
-            print("Disconnected from database")
+    from database.connection import db_connect, db_disconnect
             
     @commands.hybrid_command(
         name="help", description="List all commands the bot has loaded.", with_app_command=True
