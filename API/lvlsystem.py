@@ -1,6 +1,5 @@
 from fastapi import APIRouter,HTTPException
 from database.connection import db_connect, db_disconnect,db
-from main import bot
 from cogs import lvlsystem
 
 router = APIRouter( 
@@ -8,7 +7,8 @@ router = APIRouter(
                     tags=["Level system"],
                     responses={404: {"description": ""}},
                     )
-
+from discord.ext import commands
+bot = commands.bot
 # ----------------------------LEVEL SYSTEM----------------------------------------
 # @router.post("/LVLsystem_status/",dependencies=[Depends(check_api_key)])
 

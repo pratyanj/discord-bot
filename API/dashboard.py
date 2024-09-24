@@ -2,7 +2,8 @@ from fastapi import APIRouter,HTTPException
 from starlette.responses import RedirectResponse
 from pydantic import BaseModel
 from database.connection import db_connect, db_disconnect,db
-from main import bot
+from discord.ext import commands
+bot = commands.bot
 import config
 import requests
 import json

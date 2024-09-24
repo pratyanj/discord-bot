@@ -1,6 +1,7 @@
 from fastapi import APIRouter,HTTPException
 from database.connection import db_connect, db_disconnect,db
-from main import bot
+from discord.ext import commands
+bot = commands.bot
 import discord
 
 router = APIRouter( 
