@@ -1,6 +1,5 @@
 # api.py
 from fastapi import FastAPI
-import config
 
 from discord.ext import commands
 # from fastapi.middleware.cors import CORSMiddleware
@@ -12,10 +11,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from prisma import Prisma
 db = Prisma()
 from database.connection import db_connect, db_disconnect
-CLIENT_ID = config.CLIENT_ID
-CLIENT_SECRET = config.CLIENT_SECRET
-REDIRECT_URL = config.REDIRECT_URL
-LOGIN_URL = config.LOGIN_URL
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+CLIENT_ID = os.getenv('CLIENT_ID')
+CLIENT_SECRET = os.getenv('CLIENT_SECRET')
+REDIRECT_URL = os.getenv('REDIRECT_URL')
+LOGIN_URL = os.getenv('LOGIN_URL')
 
 
 def myAPI(bot: commands.Bot):
@@ -44,7 +48,7 @@ def myAPI(bot: commands.Bot):
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    API_KEY = config.API_KEY
+    API_KEY = os.getenv('API_KEY')
     # Create an instance of the APIKeyHeader security scheme
     api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
 

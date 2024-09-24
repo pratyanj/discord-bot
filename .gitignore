@@ -6,3 +6,4 @@ migrations/
 BOT.sqlite-journal
 config.py
 TO_bot.json
+.env
