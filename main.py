@@ -136,14 +136,18 @@ def run_fastapi_app():
 def run_discord_bot():
     bot.run(config.TOKEN)
     
-# Create threads for Discord bot and FastAPI app
-discord_thread = threading.Thread(target=run_discord_bot)
-fastapi_thread = threading.Thread(target=run_fastapi_app)
+# if __name__ == "__main__":
+#     run_fastapi_app()
 
-# # Start both threads
-# discord_thread.start()
-fastapi_thread.start()
+if __name__ == "__main__":
+    # Create threads for Discord bot and FastAPI app
+    discord_thread = threading.Thread(target=run_discord_bot)
+    fastapi_thread = threading.Thread(target=run_fastapi_app)
 
-# # Wait for both threads to finish
-discord_thread.join()
-fastapi_thread.join()
+    # Start both threads
+    discord_thread.start()
+    fastapi_thread.start()
+
+    # Wait for both threads to finish
+    discord_thread.join()
+    fastapi_thread.join()
