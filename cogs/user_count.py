@@ -2,6 +2,7 @@ from typing import Self
 import discord
 from discord.ext import commands, tasks
 from prisma import Prisma
+from database.connection import *
 # when member jion raise the count ot total member
 # If member remove from the guild then dercrese the number of member
 class User_Member_Count(commands.Cog):
@@ -10,23 +11,21 @@ class User_Member_Count(commands.Cog):
         self.db = Prisma()
         self.Mcolor = discord.Colour.from_rgb(0, 97, 146)
         # self.member_counts.start()
-
-    from database.connection import db_connect, db_disconnect
     
     async def update_member_count(self, server_id):
         print(f"Updating member count for server: {server_id}")
-        await self.db_connect()
+        await db_connect(self)
         try:
             guild = self.bot.get_guild(server_id)
             if not guild:
                 print('Guild not found.')
-                await self.db_disconnect()
+                await db_disconnect()
                 return
             
             server = await self.db.membercount.find_first(where={"server_id": server_id})
             if server is None:
                 print(f"Server {guild.name} not found in database.")
-                await self.db_disconnect()
+                await db_disconnect()
                 return
             
             member_count_channel = self.bot.get_channel(server.Total_Members)
@@ -47,7 +46,7 @@ class User_Member_Count(commands.Cog):
         except Exception as e:
             print(f'Error updating member count: {e}')
         finally:
-            await self.db_disconnect()
+            await db_disconnect()
 
     @tasks.loop(minutes=1)
     async def member_counts(self):
@@ -55,7 +54,7 @@ class User_Member_Count(commands.Cog):
         for guild in self.bot.guilds:
             print(f"Processing guild: {guild.name} ({guild.id})")
             try:
-                await self.db_connect()
+                await db_connect(self)
                 member_count = await self.db.membercount.find_first(where={"server_id": guild.id})
 
                 if member_count is None:
@@ -66,7 +65,7 @@ class User_Member_Count(commands.Cog):
             except Exception as e:
                 print(f"Error updating member count for {guild.name}: {e}")
             finally:
-                await self.db_disconnect()
+                await db_disconnect()
 
     @member_counts.before_loop
     async def before_tasks(self):
@@ -77,7 +76,7 @@ class User_Member_Count(commands.Cog):
     @commands.hybrid_command(name="setup", description="Add member count to your server")
     @commands.has_permissions(administrator=True)
     async def setup_member_count(self, ctx: commands.Context) -> None:
-        await self.db_connect()
+        await db_connect(self)
         db = await self.db.membercount.find_first(where={"server_id": ctx.guild.id})
         if db is None:
             guild = ctx.guild
@@ -100,7 +99,7 @@ class User_Member_Count(commands.Cog):
                 "Bots": bot_count.id,
                 "status": True
             })
-            await self.db_disconnect()
+            await db_disconnect()
             em = discord.Embed(description="Your server has been setup with server stats", color=self.Mcolor)
             await ctx.send(embed=em)
             return
@@ -114,9 +113,9 @@ class User_Member_Count(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def enable_member_count(self, ctx: commands.Context):
         server_id = ctx.guild.id
-        await self.db_connect()
+        await db_connect(self)
         check = await self.db.membercount.find_first(where={"server_id": server_id})
-        await self.db_disconnect()
+        await db_disconnect()
         if check is None:
             emm = discord.Embed(description=f"Server `{ctx.guild.name}` not found in database", color=self.Mcolor)
             await ctx.send(embed = emm)
@@ -126,9 +125,9 @@ class User_Member_Count(commands.Cog):
             await ctx.send(embed = em)
             
         else:
-            await self.db_connect()
+            await db_connect(self)
             await self.db.membercount.update(where={"server_id": server_id},data={"status": True})
-            await self.db_disconnect()
+            await db_disconnect()
         em = discord.Embed(description=f"Member count updates enabled for `{ctx.guild.name}`", color=self.Mcolor)
         await ctx.send(embed=em)
     
@@ -136,9 +135,9 @@ class User_Member_Count(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def disable_member_count(self, ctx: commands.Context):
         server_id = ctx.guild.id
-        await self.db_connect()
+        await db_connect(self)
         check = await self.db.membercount.find_first(where={"server_id": server_id})
-        await self.db_disconnect()
+        await db_disconnect()
         if check is None:
             em  = discord.Embed(description=f"Server `{ctx.guild.name}` not found in database", color=self.Mcolor)
             await ctx.send(embed=em)
@@ -147,9 +146,9 @@ class User_Member_Count(commands.Cog):
             em = discord.Embed(description=f"Member count already disabled for `{ctx.guild.name}`", color=self.Mcolor)
             await ctx.send(embed=em)
         else:
-            await self.db_connect()  
+            await db_connect(self)  
             await self.db.membercount.update(where={"server_id": server_id},data={"status": False})
-            await self.db_disconnect()
+            await db_disconnect()
             em = discord.Embed(description=f"Member count updates disabled for `{ctx.guild.name}`", color=self.Mcolor)
             await ctx.send(embed=em)
 
@@ -157,9 +156,9 @@ class User_Member_Count(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def status_member_count(self, ctx: commands.Context):
         server_id = ctx.guild.id
-        await self.db_connect()
+        await db_connect(self)
         server = await self.db.membercount.find_first(where={"server_id": server_id})
-        await self.db_disconnect()
+        await db_disconnect()
         if server is None:
             em = discord.Embed(description = f"Server `{ctx.guild.name}` not found in database", color=self.Mcolor)
             await ctx.send(embed=em)

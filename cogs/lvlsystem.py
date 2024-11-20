@@ -4,6 +4,7 @@ from prisma import Prisma
 import random
 from easy_pil import *
 from typing import Final, ClassVar
+from database.connection import db_connect, db_disconnect
 
 LEVELS_AND_XP: Final = {
             '0': 0,
@@ -122,15 +123,15 @@ class Level_System(commands.Cog):
     async def on_message(self, message:discord.Message):
         
         # print("_____________________LVLsystem______________________")
-        await self.db_connect()
+        await db_connect(self)
         ss = await self.db.server.find_unique(where={"server_id": message.guild.id})
         if ss == None:
-            await self.db_disconnect()
+            await db_disconnect()
             print("No server found")
             return
         
         if ss.prefix in message.content or message.author.bot:
-            await self.db_disconnect()
+            await db_disconnect()
             # print("Message is a command or a bot")
             return
         # -------------On xp role-------------------
@@ -141,7 +142,7 @@ class Level_System(commands.Cog):
                 print("message author roles: ",message.author.roles)
                 if i.role_id in [role.id for role in message.author.roles]:                    
                     print("User has xp role")
-                    await self.db_disconnect()
+                    await db_disconnect()
                     return
         # -------------On xp role-------------------
         # -------------on xp channel-------------------
@@ -149,7 +150,7 @@ class Level_System(commands.Cog):
         if no_xp_channel_db!= None:
             for i in no_xp_channel_db:
                 if i.channel_id == message.channel.id:
-                    await self.db_disconnect()
+                    await db_disconnect()
                     print("User has xp channel")
                     return
         # -------------on xp channel-------------------
@@ -168,7 +169,7 @@ class Level_System(commands.Cog):
             embed = discord.Embed(
                 title="Level System", description=f"A new level system has been created for {message.guild.name}", color=discord.Color.green())
             await message.guild.get_channel(ss.log_channel).send(embed=embed)
-            await self.db_disconnect()
+            await db_disconnect()
             return
 
         # IF USER IS NOT IN DATABASE THEN CREATE ONE
@@ -176,7 +177,7 @@ class Level_System(commands.Cog):
             create_user = await self.db.userslevel.create(data={"server_id": message.guild.id, "user_id": author.id, "user_name": author.name, "level": 0, "xp": 1})
             em = discord.Embed(title="Level system",description=f"New user add to lvl system:`{author.id}`", color=self.Mcolor)
             await message.guild.get_channel(ss.log_channel).send(embed=em)
-            await self.db_disconnect()
+            await db_disconnect()
             # print(f"New member add to lvl system:{author.id}")
             return
         
@@ -187,7 +188,7 @@ class Level_System(commands.Cog):
             embed = discord.Embed(
                 title="Level system", description=f"Level system is off", color=discord.Color.green())
             await message.guild.get_channel(ss.log_channel).send(embed=embed)
-            await self.db_disconnect()
+            await db_disconnect()
             # print("Level system is off")
             return
 
@@ -199,14 +200,14 @@ class Level_System(commands.Cog):
             level = 0
         if user.xp >= MAX_XP:
             print("Max xp reached")
-            await self.db_disconnect()
+            await db_disconnect()
             return
         
         if level < 5:
             print("Level is less than 5")
             xp += random.randint(1, 5)
             await self.db.userslevel.update(where={"ID": user.ID}, data={"xp": xp})
-            await self.db_disconnect()
+            await db_disconnect()
         else:
             print("Level is more than 5")
             rand = random.randint(1, (level//2))
@@ -215,23 +216,23 @@ class Level_System(commands.Cog):
                 xp += random.randint(1, 3)
                 print(f"xp is increased to {xp}")
                 await self.db.userslevel.update(where={"ID": user.ID}, data={"xp": xp})
-                await self.db_disconnect()
+                await db_disconnect()
             else:
                 xp += int(rand)
                 print(f"xp is increased to {xp}")
                 await self.db.userslevel.update(where={"ID": user.ID}, data={"xp": xp})
-                await self.db_disconnect()
+                await db_disconnect()
                 
         print(f"XP: {xp}, Level: {level}")
 
         if xp >= LEVELS_AND_XP[str(level)]:
-            await self.db_connect()
+            await db_connect(self)
             level += 1
             await self.db.userslevel.update(where={"ID": user.ID}, data={"level": level, "xp": 0})
             msg = f"{author.mention} leveled up to {level}"
             print('msg:', msg)
             dataa = await self.db.levelrole.find_many(where={"server_id": message.guild.id})
-            await self.db_disconnect()
+            await db_disconnect()
             if len(dataa) == 0 or dataa == None:
                 return
             for i in dataa:
@@ -265,7 +266,7 @@ class Level_System(commands.Cog):
     
     @commands.hybrid_command(name="lvl", description="Check your level", with_app_command=True)
     async def lvl(self,ctx:commands.Context):
-        await self.db_connect()
+        await db_connect(self)
         member = ctx.author
         server = await self.db.server.find_unique(where={"server_id": ctx.guild.id})
         lvl = await self.db.levelsetting.find_unique(where={"server_id": ctx.guild.id})
@@ -282,8 +283,9 @@ class Level_System(commands.Cog):
                 "xp": xp,
                 "level": level,
                 "next_level_xp": LEVELS_AND_XP[str(level)],
-                "percent":(xp/LEVELS_AND_XP[str(level)])*100,
-            }
+                "percent":(xp/LEVELS_AND_XP[str(1 if level == 0 else level)])*100,            }
+            if userdata["percent"] < 1:
+                userdata["percent"] = 2
             print("persontage:",userdata["percent"])
             user_lvl = await self.db.userslevel.find_many(where={"server_id": ctx.guild.id}, order=[{"level": "desc"}, {"xp": "desc"}], take=10)
             member_rank = int
@@ -339,26 +341,26 @@ class Level_System(commands.Cog):
                 font=poppins1, color="#FFFFFF"
                 )
             file = discord.File(fp=background.image_bytes,filename="levelcard.jpg")
-            await self.db_disconnect()
+            await db_disconnect()
             await ctx.send(file=file)
 
         else:
             userLVL = await self.db.userslevel.create(data={"server_id": ctx.guild.id, "user_id": ctx.author.id, "user_name": ctx.author.name, "xp": 1, "level": 0})
             print("New user created", userLVL)
-            await self.db_disconnect()
+            await db_disconnect()
             return
 
     @commands.hybrid_command(name="lvlsys_enable", description="Enable leveling system")
     @commands.has_permissions(manage_messages=True)
     @commands.has_permissions(administrator=True)
     async def enable(self, ctx: commands.Context):
-        await self.db_connect()
+        await db_connect(self)
         lvldb = await self.db.levelsetting.find_unique(where={"server_id": ctx.guild.id})
         ss = await self.db.server.find_unique(where={"server_id": ctx.guild.id})
         if lvldb == None:
             print("No leveling settings found for this server, creating new...(CMD for enable_lvl)")
             await self.db.levelsetting.create(data={"server_id": ctx.guild.id, "status": False,"level_up_channel_id":0,"level_up_channel_name":""})
-            await self.db_disconnect()
+            await db_disconnect()
             em = discord.Embed(
                 title="CMD",
                 description="No leveling settings found for this server!",
@@ -368,7 +370,7 @@ class Level_System(commands.Cog):
             await ctx.send(embed=em)
 
         if lvldb.status == True:
-            await self.db_disconnect()
+            await db_disconnect()
             
             em = discord.Embed(
                 description="The leveling system is already enabled.",
@@ -377,7 +379,7 @@ class Level_System(commands.Cog):
             await ctx.send(embed=em)
         else:
             update = await self.db.levelsetting.update(where={"ID": lvldb.ID}, data={"status": True})
-            await self.db_disconnect()
+            await db_disconnect()
             em = discord.Embed(
                 description="Leveling system has been enabled",
                 color=self.Mcolor)
@@ -387,13 +389,13 @@ class Level_System(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     @commands.has_permissions(administrator=True)
     async def disable(self, ctx: commands.Context):
-        await self.db_connect()
+        await db_connect(self)
         ss = await self.db.server.find_unique(where={"server_id": ctx.guild.id})
         lvldb = await self.db.levelsetting.find_unique(where={"server_id": ctx.guild.id})
         if lvldb == None:
             print("No leveling settings found for this server, creating new...(CMD for enable_lvl)")
             await self.db.levelsetting.create(data={"server_id": ctx.guild.id, "status": False,"level_up_channel_id":0,"level_up_channel_name":""})
-            await self.db_disconnect()
+            await db_disconnect()
             em = discord.Embed(
                 title="CMD",
                 description="No leveling settings found for this server!",
@@ -404,12 +406,12 @@ class Level_System(commands.Cog):
             return
 
         if lvldb.status == False:
-            await self.db_disconnect()
+            await db_disconnect()
             embed = discord.Embed(description="Leveling system is already disabled",color=self.Mcolor)
             await ctx.send(embed=embed)
         else:
             update = await self.db.levelsetting.update(where={"ID": lvldb.ID}, data={"status": False})
-            await self.db_disconnect()
+            await db_disconnect()
             em = discord.Embed(description="Leveling system has been disabled",color=self.Mcolor)
             await ctx.send(embed=em)
 
@@ -417,18 +419,18 @@ class Level_System(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     @commands.has_permissions(administrator=True)
     async def set_role(self, ctx: commands.Context, level: int, role: discord.Role):
-        await self.db_connect()
+        await db_connect(self)
         ss = await self.db.server.find_unique(where={"server_id": ctx.guild.id})
         lvldb = await self.db.levelsetting.find_unique(where={"server_id": ctx.guild.id})
         roledb = await self.db.levelrole.find_first(where={"server_id": ctx.guild.id, "role_id": role.id})
         if lvldb.status == False:
-            await self.db_disconnect()
+            await db_disconnect()
             em = discord.Embed(description="Leveling system is disabled plz emable it for this feature.",color=self.Mcolor)
             await ctx.send(embed=em)
             return
         if roledb != None:
             print("Role already exists")
-            await self.db_disconnect()
+            await db_disconnect()
             em = discord.Embed(description="Role already exists",color=self.Mcolor)
             await ctx.send(embed=em)
             return
@@ -436,16 +438,16 @@ class Level_System(commands.Cog):
         print("Role set for {role} from {level}".format(
             role=role.name, level=level))
         em = discord.Embed(description=f"Role has been set for Level({level} to role `{role.name}`)",color=self.Mcolor)
-        await self.db_disconnect()
+        await db_disconnect()
         await ctx.send(embed=em)
 
     @commands.hybrid_command(name='rank', help='Check your rank')
     async def rank(self, ctx: commands.Context):
-        await self.db_connect()
+        await db_connect(self)
         server = await self.db.server.find_unique(where={"server_id": ctx.guild.id})
         lvl = await self.db.levelsetting.find_unique(where={"server_id": ctx.guild.id})
         if lvl.status == False:
-            await self.db_disconnect()
+            await db_disconnect()
             em = discord.Embed(description="Leveling system is disabled plz emable it for this feature.",color=self.Mcolor)
             await ctx.send(embed=em)
             return
@@ -474,25 +476,25 @@ class Level_System(commands.Cog):
         em.set_thumbnail(url=guild.icon)
         em.set_footer(text="Ranking of the top 10 users")
         await ctx.send(embed=em)
-        await self.db_disconnect()
+        await db_disconnect()
 
     @commands.hybrid_command(name='lvlsys_set_channel', help='Set channel for level up messages')
     @commands.has_permissions(administrator=True)
     async def set_channel(self, ctx: commands.Context, channel: discord.TextChannel):
-        await self.db_connect()
+        await db_connect(self)
         lvl = await self.db.levelsetting.find_unique(where={"server_id": ctx.guild.id})
         if lvl == None :
             em = discord.Embed(description="Leveling system table not found in database",color=self.Mcolor)
             await ctx.send(embed=em)
-            await self.db_disconnect()
+            await db_disconnect()
         if lvl.level_up_channel_id == channel.id:
             em = discord.Embed(description=f"Channel is already setted to `{channel.name}`", color=self.Mcolor)
             await ctx.send(embed=em)
-            await self.db_disconnect()
+            await db_disconnect()
         else:
             update = await self.db.levelsetting.update(where={"server_id": ctx.guild.id}, data={"level_up_channel_id": channel.id,"level_up_channel_name": channel.name})
             em = discord.Embed(description=f"Level system Channel has been set to `{channel.name}`",color=self.Mcolor)
-            await self.db_disconnect()
+            await db_disconnect()
             await ctx.send(embed=em)
             
     @commands.hybrid_command(name='reduse_level', help='Set status of level system')
@@ -504,17 +506,17 @@ class Level_System(commands.Cog):
         if amount <= 0:
             raise ctx.send('Parameter "amount" was less than or equal to zero. The minimum value is 1')
         
-        await self.db_connect()
+        await db_connect(self)
         md = await self.db.userslevel.find_first(where={"server_id": ctx.guild.id, "user_id": member.id})
         if md != None:
             if md.level >= MAX_LEVEL:
                     em = discord.Embed(description="Max xp reached",color=self.Mcolor)
                     await ctx.send(embed=em)
-                    await self.db_disconnect()
+                    await db_disconnect()
                     return
             else:
                 await self.db.userslevel.update(where={"ID": md.ID}, data={"xp": 0, "level":amount})
-                await self.db_disconnect()
+                await db_disconnect()
                 em = discord.Embed(description=f"User {member.mention} has now `level {amount}`",color=self.Mcolor)
                 await ctx.send(embed=em)
     
@@ -527,13 +529,13 @@ class Level_System(commands.Cog):
         if amount <= 0:
             raise ctx.send('Parameter "amount" was less than or equal to zero. The minimum value is 1')
         
-        await self.db_connect()
+        await db_connect(self)
         md = await self.db.userslevel.find_first(where={"server_id": ctx.guild.id, "user_id": member.id})
         if md != None:
             if md.xp >= MAX_XP:
                 em = discord.Embed(description="Max xp reached",color=self.Mcolor)
                 await ctx.send(embed=em)
-                await self.db_disconnect()
+                await db_disconnect()
                 return
             else:
                 new_total_xp = md.xp + amount
@@ -555,7 +557,7 @@ class Level_System(commands.Cog):
                             break
                 
                 update = await self.db.userslevel.update(where={"ID": md.ID}, data={"xp": new_total_xp, "level":maybe_new_level})
-                await self.db_disconnect()
+                await db_disconnect()
                 em = discord.Embed(description=f"User {member.mention} has been given `{amount}` xp and is now level `{maybe_new_level}`",color=self.Mcolor)
                 await ctx.send(embed=em)
       
@@ -565,7 +567,7 @@ class Level_System(commands.Cog):
         '''
         Set role with this user will not gain XP
         '''
-        await self.db_connect()
+        await db_connect(self)
         DB = await self.db.noxprole.find_first(where={"server_id":ctx.guild.id, "role_id": role})
         if DB == None:
             await self.db.noxprole.create(data={"server_id": ctx.guild.id, "role_id": role, "role_name": role.name})
@@ -573,7 +575,7 @@ class Level_System(commands.Cog):
             embed = discord.Embed(description=f"Role {role.name} added to no xp role list", color=self.Mcolor)
             await ctx.send(embed=embed)        
         else:
-            await self.db_disconnect()
+            await db_disconnect()
             ctx.send(f"Role {role.name} already in no xp role list")
     
     @commands.hybrid_command(name='remove_no_xp_role',help='remove role from no xp role list')
@@ -582,14 +584,14 @@ class Level_System(commands.Cog):
         '''
         Remove role from no xp role list
         '''
-        await self.db_connect()
+        await db_connect(self)
         DB = await self.db.noxprole.find_first(where={"server_id":ctx.guild.id, "role_id": role})
         if DB == None:
-            await self.db_disconnect()
+            await db_disconnect()
             ctx.send(f"Role {role.name} not in no xp role list")
         else:
             await self.db.noxprole.delete(where={"ID": DB.ID})
-            await self.db_disconnect()
+            await db_disconnect()
             ctx.send(f"Role {role.name} removed from no xp role list")
     
     @commands.hybrid_command(name='add_no_xp-channel',help='In this channel user will not gain XP')
@@ -598,7 +600,7 @@ class Level_System(commands.Cog):
         '''
         Set channel with this user will not gain XP
         '''
-        await self.db_connect()
+        await db_connect(self)
         DB = await self.db.noxpchannel.find_first(where={"server_id":ctx.guild.id, "channel_id": channel.id})
         if DB == None:
             await self.db.noxpchannel.create(data={"server_id": ctx.guild.id, "channel_id": channel.id, "channel_name": channel.name})
@@ -606,7 +608,7 @@ class Level_System(commands.Cog):
             embed = discord.Embed(description=f"Channel {channel.name} added to on xp channel list", color=self.Mcolor)
             await ctx.send(embed=embed)
         else:
-            await self.db_disconnect()
+            await db_disconnect()
             ctx.send(f"Channel {channel.name} already in on xp channel list")
 
     @commands.hybrid_command(name='remove_no_xp_channel',help='remove channel from no xp channel list')
@@ -615,14 +617,14 @@ class Level_System(commands.Cog):
         '''
         Remove channel from no xp channel list
         '''
-        await self.db_connect()
+        await db_connect(self)
         DB = await self.db.noxpchannel.find_first(where={"server_id":ctx.guild.id, "channel_id": channel.id})
         if DB == None:
-            await self.db_disconnect()
+            await db_disconnect()
             ctx.send(f"Channel {channel.name} not in no xp channel list")
         else:
             await self.db.noxpchannel.delete(where={"ID": DB.ID})
-            await self.db_disconnect()
+            await db_disconnect()
             ctx.send(f"Channel {channel.name} removed from no xp channel list")
 
 async def setup(bot: commands.Bot):

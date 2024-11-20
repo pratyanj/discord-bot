@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from prisma import Prisma
 import asyncio
+from database.connection import *
 
 class Image_Link_only(commands.Cog):
     def __init__(self, bot:commands.Bot):
@@ -16,9 +17,9 @@ class Image_Link_only(commands.Cog):
         # await self.link_channel(message, self)
 
     async def image_channel(self, message:discord.Message):
-        await self.db_connect()
+        await db_connect(self)
         database = await self.db.imagesonly.find_first(where={"channel_id":message.channel.id,"server_id":message.guild.id})
-        await  self.db_disconnect()
+        await  db_disconnect()
         if database == None:
             return
         if not message.author.bot:
@@ -39,9 +40,9 @@ class Image_Link_only(commands.Cog):
 
     async def link_channel(self, message:discord.Message):
         Guild = self.bot.get_guild(message.guild.id)
-        await self.db_connect()
+        await db_connect(self)
         database = await self.db.linksonly.find_first(where={"server_id":message.guild.id,"channel_id":message.channel.id})
-        await self.db_disconnect()
+        await db_disconnect()
         if database == None:
             # print("database not found for del_link_msg")
             return
