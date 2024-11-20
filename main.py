@@ -1,3 +1,16 @@
+'''
+
+The `DiscordBot` class is the main entry point for the Discord bot application. It inherits from the `commands.Bot` class from the `discord.py` library and provides the following functionality:
+
+- Initializes the bot with the specified command prefix and intents.
+- Connects the bot to the Prisma database.
+- Handles the `on_ready` event, which is triggered when the bot is logged in and ready to receive commands.
+- Loads all the bot's cogs (extensions) during the `setup_hook` method.
+- Handles the `on_guild_join` and `on_guild_remove` events, which are triggered when the bot joins or leaves a Discord server, respectively. These events are used to manage the server's data in the Prisma database.
+- Handles the `on_message` event, which is triggered when a message is received. This event is used to log the message content and process any commands.
+- Provides a `get_prefix` method to retrieve the server-specific prefix for the bot.
+- Provides an `import_server` method to create the necessary channels and database entries when the bot joins a new server.
+'''
 import discord
 from discord.ext import commands
 import asyncio
@@ -8,6 +21,7 @@ import os
 from prisma import Prisma
 from fastapi import FastAPI
 import threading
+from database.connection import db_connect, db_disconnect
 
 
 class DiscordBot(commands.Bot):
@@ -15,8 +29,7 @@ class DiscordBot(commands.Bot):
         super().__init__(command_prefix=command_prefix, intents=discord.Intents.all(),help_command=None)
         self.db = Prisma()
 
-    from database.connection import db_connect, db_disconnect
-
+    
     async def on_ready(self):
         await bot.tree.sync()
         
@@ -47,24 +60,41 @@ class DiscordBot(commands.Bot):
         await self.import_server(guild)
 
     async def on_guild_remove(self, guild: discord.Guild):
-        await self.db_connect()
+        print(f"Left {guild.name} ({guild.id})")
+        await db_connect(self)
         try:
-            await self.db.server.delete(where={'server_id': guild.id})
-            await self.db.status.delete(where={'server_id': guild.id})
-            await self.db.welcome.delete(where={'server_id': guild.id})
-            await self.db.goodbye.delete(where={'server_id': guild.id})
-            await self.db.levelsetting.delete(where={'server_id': guild.id})
-            await self.db.youtubesetting.delete(where={'server_id': guild.id})
-            await self.db.reactionverificationrole.delete(where={'server_id': guild.id})
-            await self.db.noxpchannel.delete_many(where={'server_id': guild.id})
-            await self.db.noxprole.delete_many(where={'server_id': guild.id})
-            await self.db.imagesonly.delete_many(where={'server_id': guild.id})
-            await self.db.linksonly.delete_many(where={'server_id': guild.id})
-            await self.db.youtubesubchannel.delete_many(where={'server_id': guild.id})
-            await self.db.youtubevideos.delete_many(where={'server_id': guild.id})
+            # await self.db.server.delete(where={'server_id': guild.id})
+            # await self.db.status.delete(where={'server_id': guild.id})
+            # await self.db.welcome.delete(where={'server_id': guild.id})
+            # await self.db.goodbye.delete(where={'server_id': guild.id})
+            # await self.db.levelsetting.delete(where={'server_id': guild.id})
+            # await self.db.youtubesetting.delete(where={'server_id': guild.id})
+            # await self.db.reactionverificationrole.delete(where={'server_id': guild.id})
+            # await self.db.noxpchannel.delete_many(where={'server_id': guild.id})
+            # await self.db.noxprole.delete_many(where={'server_id': guild.id})
+            # await self.db.imagesonly.delete_many(where={'server_id': guild.id})
+            # await self.db.linksonly.delete_many(where={'server_id': guild.id})
+            # await self.db.youtubesubchannel.delete_many(where={'server_id': guild.id})
+            # await self.db.youtubevideos.delete_many(where={'server_id': guild.id})
+            # Test this code later
+            models = [
+                        'server', 'status', 'welcome', 'goodbye', 'levelsetting',
+                        'youtubesetting', 'reactionverificationrole'
+                    ]
+            for model in models:
+                await getattr(self.db, model).delete(where={'server_id': guild.id})
+
+            many_models = [
+                'noxpchannel', 'noxprole', 'imagesonly', 'linksonly',
+                'youtubesubchannel', 'youtubevideos'
+            ]
+            for model in many_models:
+                await getattr(self.db, model).delete_many(where={'server_id': guild.id})
+                print(getattr(self.db, model))
         except Exception as e:
             print(f"Could not found the server in the database: {e}")
-        await self.db_disconnect()
+        finally:
+            await db_disconnect()
 
     async def on_message(self, message: discord.Message):
         if not message.author.bot:
@@ -74,19 +104,19 @@ class DiscordBot(commands.Bot):
 
     async def get_prefix(self, message:discord.Message):
         default_prefix = "$"
-        await self.db_connect()
+        await db_connect(self)
         server_doc = await self.db.server.find_unique({"server_id": message.guild.id})
-        await self.db_disconnect()
+        await db_disconnect()
         if server_doc is not None:
             return server_doc.prefix
         else:
-            await self.db_connect()
+            await db_connect(self)
             await self.import_server(discord.Guild())
-            await self.db_disconnect()
+            await db_disconnect()
             return default_prefix
 
-    async def import_server(self, guild:discord.Guild):
-        
+    async def on_guild_join(self, guild:discord.Guild):
+        print(f"Joined a new server: {guild.name} ({guild.id})")
         category_name = "Bot-Config"
         log_c = "Bot-logs"
         setup_c = "Bot-setup"
@@ -104,7 +134,7 @@ class DiscordBot(commands.Bot):
             log = await guild.create_text_channel(log_c, overwrites=overwrites, category=category)
             setup = await guild.create_text_channel(setup_c, overwrites=overwrites, category=category)
         
-        await self.db_connect()
+        await db_connect(self)
         await self.db.server.create(data={"server_id": guild.id, 'server_name': guild.name, 'prefix': '$', 'log_channel': str(log.id)})
         await self.db.welcome.create(data={'server_id': guild.id, "channel_id": 0, "channel_name": '', "message": "", "status": False})
         await self.db.goodbye.create(data={"server_id": guild.id, "channel_id": 0, "channel_name": '', "message": "", "status": False})
@@ -115,12 +145,10 @@ class DiscordBot(commands.Bot):
             "server_id": guild.id,
             "channel_id": 0,
             "channel_name": '',
-            "dm_message": False,
-            "reaction": '',
             "role_id": 0,
             "role_name": ''
         })
-        await self.db_disconnect()
+        await db_disconnect()
 
 
 # Create the bot instance
