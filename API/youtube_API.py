@@ -1,5 +1,5 @@
 from fastapi import APIRouter,HTTPException
-from database.connection import db_connect, db_disconnect,db
+from database.connection import *
 from discord.ext import commands
 bot = commands.bot
 router = APIRouter( 
@@ -13,7 +13,7 @@ router = APIRouter(
 # ----------------------------YOUTUBE-------------------------------------------
 @router.get("/GET_YT_SUB_channels_lst/", tags=["youtube"])
 async def GET_YT_SUB_channels_lst(guild: int):
-    await db_connect()
+    await db_connect1()
     Guild = bot.get_guild(guild)
     guild = await db.youtubesubchannel.find_many(where={"server_id": guild})
     await db_disconnect()
@@ -34,7 +34,7 @@ async def GET_YT_SUB_channels_lst(guild: int):
 async def youtube_system_status(guild: int, status: bool):
     Guild = bot.get_guild(guild)
     if Guild:
-        await db_connect()
+        await db_connect1()
         yt = await db.youtubesetting.find_unique(where={"server_id": guild})
         if yt == None:
             cr = await db.youtubesetting.create(data={"server_id": guild, "status": status,"channel_id":0,"channel_name":""})
@@ -54,7 +54,7 @@ async def youtube_video_bot_channel_setup(guild: int, channel: int):
     if Guild:
         Channel = bot.get_channel(channel)
         if Channel:
-            await db_connect()
+            await db_connect1()
             yt= await db.youtubesetting.find_unique(where={"server_id": guild})
             if yt == None:
                 cr = await db.youtubesetting.create(data={"server_id": guild, "status": True,"channel_id":Channel.id,"channel_name":Channel.name,})
@@ -76,7 +76,7 @@ async def subscribe_youtube_channel_by_name(guild: int, YT_channel_usr: str):
     Guild = bot.get_guild(guild)
     if Guild:
         data_set = {"youtube_channels": [YT_channel_usr]}
-        await db_connect()
+        await db_connect1()
         yt_channels = await db.youtubesubchannel.find_many(where={"server_id": guild})
         for i in yt_channels:
             if i.channel == YT_channel_usr:
@@ -94,7 +94,7 @@ async def subscribe_youtube_channel_by_name(guild: int, YT_channel_usr: str):
 async def remove_YT_channel(guild: int, YT_channel_usr: str):
     Guild = bot.get_guild(guild)
     if Guild:
-        await db_connect()
+        await db_connect1()
         try:
             yt = await db.youtubesubchannel.find_first(where={"server_id": guild,"channel": YT_channel_usr})
             await db.youtubesubchannel.delete(where={"ID":yt.ID})

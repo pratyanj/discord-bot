@@ -9,8 +9,8 @@ from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
 
 from prisma import Prisma
+from API import WelcomeLeave_API, bot_server_API, bot_status_API, dashboard_API, img_link_API, lvlsystem_API ,youtube_API
 db = Prisma()
-from database.connection import db_connect, db_disconnect
 import os
 from dotenv import load_dotenv
 
@@ -66,7 +66,6 @@ def myAPI(bot: commands.Bot):
         # response = RedirectResponse(url='/docs')
         response = RedirectResponse(url='/api/v2/docs')
         return response
-    from API import youtubeAPI,dashboard,bot_server,img_link,WelcomeLeave,bot_status,lvlsystem
     # ------------------------------------------------------------
     # app.include_router(dashboard.router, dependencies=[Depends(check_api_key)])
     # app.include_router(youtubeAPI.router, dependencies=[Depends(check_api_key)])
@@ -76,13 +75,13 @@ def myAPI(bot: commands.Bot):
     # app.include_router(bot_status.router, dependencies=[Depends(check_api_key)])
     # app.include_router(lvlsystem.router, dependencies=[Depends(check_api_key)])
     # ------------------------------------------------------------
-    app.include_router(dashboard.router)
-    app.include_router(youtubeAPI.router)
-    app.include_router(bot_server.router)
-    app.include_router(img_link.router)
-    app.include_router(WelcomeLeave.router)
-    app.include_router(bot_status.router)
-    app.include_router(lvlsystem.router)
+    app.include_router(dashboard_API.router)
+    app.include_router(youtube_API.router)
+    app.include_router(bot_server_API.router)
+    app.include_router(img_link_API.router)
+    app.include_router(WelcomeLeave_API.router)
+    app.include_router(bot_status_API.router)
+    app.include_router(lvlsystem_API.router)
     # ------------------------------------------------------------
 
     return app

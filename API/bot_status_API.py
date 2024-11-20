@@ -1,5 +1,5 @@
 from fastapi import APIRouter,HTTPException
-from database.connection import db_connect, db_disconnect,db
+from database.connection import *
 from discord.ext import commands
 bot = commands.bot
 
@@ -15,7 +15,7 @@ router = APIRouter(
 async def link_channel_switch(guild: int, status: bool):
     Guild = bot.get_guild(guild)
     if Guild:
-        await db_connect()
+        await db_connect1()
         link = await db.status.find_unique(where={"server_id": guild})
         if link == None:
             cr = await db.status.create(data={"server_id": guild, "IMAGES_ONLY": False, "LINKS_ONLY":status})
@@ -33,7 +33,7 @@ async def link_channel_switch(guild: int, status: bool):
 async def IMG_channel_switch(guild: int, status: bool):
     Guild = bot.get_guild(guild)
     if Guild:
-        await db_connect()
+        await db_connect1()
         link = await db.status.find_unique(where={"server_id": guild})
         if link == None:
             cr = await db.status.create(data={"server_id": guild, "IMAGES_ONLY": status, "LINKS_ONLY":False})
@@ -52,7 +52,7 @@ async def IMG_channel_switch(guild: int, status: bool):
 async def welcome_status(guild: int, status: bool):
     Guild = bot.get_guild(guild)
     if Guild:
-        await db_connect()
+        await db_connect1()
         welcome = await db.welcome.find_unique(where={"server_id": guild})
         if welcome == None:
             cr = await db.welcome.create(data={"server_id": guild, "channel_id": 0, "channel_name": "", "message": "", "status": False})
@@ -69,7 +69,7 @@ async def welcome_status(guild: int, status: bool):
 async def leave_status(guild: int, status: bool):
     Guild = bot.get_guild(guild)
     if Guild:
-        await db_connect()
+        await db_connect1()
         leave = await db.goodbye.find_unique(where={"server_id": guild})
         if leave == None:
             cr = await db.goodbye.create(data={"server_id": guild, "channel_id": 0, "channel_name": "", "message": "", "status": False})

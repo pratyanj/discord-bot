@@ -1,7 +1,7 @@
 from fastapi import APIRouter,HTTPException
 from starlette.responses import RedirectResponse
 from pydantic import BaseModel
-from database.connection import db_connect, db_disconnect,db
+from database.connection import *
 from discord.ext import commands
 bot = commands.bot
 import config
@@ -33,7 +33,7 @@ async def available_users(user_id: int):
     print("User ID:",user_id)
     try:
         try:
-            await db_connect()
+            await db_connect1()
             server = await db.dashboarduser.find_first(where={"user_id": user_id})
             print(server)
             await db_disconnect()
@@ -104,7 +104,7 @@ async def callback(code: str):
 
     data = {"user": user_data, "guilds": guilds}
     try:
-        await db_connect()
+        await db_connect1()
         database = await db.dashboarduser.find_unique(where={"user_id": int(user_data["id"])})
         if database is None:
             update = await db.dashboarduser.create(data={

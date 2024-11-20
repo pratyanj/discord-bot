@@ -1,5 +1,5 @@
 from fastapi import APIRouter,HTTPException
-from database.connection import db_connect, db_disconnect,db
+from database.connection import *
 from cogs import lvlsystem
 
 router = APIRouter( 
@@ -16,7 +16,7 @@ bot = commands.bot
 async def LVLsystem_status(guild: int, status: bool):
     Guild = bot.get_guild(guild)
     if Guild:
-        await db_connect()
+        await db_connect1()
         lvl = await db.levelsetting.find_unique(where={"server_id": guild})
         if lvl == None:
             cr = await db.levelsetting.create(data={"server_id": guild, "status": status,"level_up_channel_id":0,"level_up_channel_name":""})
@@ -36,7 +36,7 @@ async def LVL_role_set(guild: int, role: int, lvl: int):
     if Guild:
         for rol in Guild.roles:
             if rol.id == role:
-                await db_connect()
+                await db_connect1()
                 lvls = await db.levelrole.find_first(where={"server_id": guild, "level": lvl})
                 if lvls == None:
                     dd = {
@@ -87,7 +87,7 @@ async def add_xp(guild: int, user: int, xp: int):
         amount = xp
         if amount <= 0:
             return ({"message":'Parameter "amount" was less than or equal to zero. The minimum value is 1'})
-        await db_connect()
+        await db_connect1()
         userdb = await db.userslevel.find_first(where={"server_id": guild, "user_id": user})
         if userdb == None:
             await db_disconnect()
@@ -127,7 +127,7 @@ async def remove_level(guild: int, user: int, level: int):
         amount = level
         if amount <= 0:
             return ({"message":'Parameter "Level" was less than or equal to zero. The minimum value is 1'})
-        await db_connect()
+        await db_connect1()
         userdb = await db.userslevel.find_first(where={"server_id": guild, "user_id": user})
         if userdb == None:
             await db_disconnect()

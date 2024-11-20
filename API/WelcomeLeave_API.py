@@ -1,5 +1,5 @@
 from fastapi import APIRouter,HTTPException
-from database.connection import db_connect, db_disconnect,db
+from database.connection import *
 from discord.ext import commands
 bot = commands.bot
 
@@ -14,7 +14,7 @@ router = APIRouter(
 async def welcome_message(guild: int, message: str):
     Guild = bot.get_guild(guild)
     if Guild:
-        await db_connect()
+        await db_connect1()
         welcome = await db.welcome.find_unique(where={"server_id": guild})
         if welcome == None:
             update = await db.welcome.create(data={"server_id": guild, "message": message})
@@ -32,7 +32,7 @@ async def welcome_message(guild: int, message: str):
 async def leave_message(guild: int, message: str):
     Guild = bot.get_guild(guild)
     if Guild:
-        await db_connect()
+        await db_connect1()
         leave = await db.goodbye.find_first(where={"server_id": guild})
         if leave == None:
             cr = await db.goodbye.create(data={"server_id": guild,"channel_id":0,"channel_name":'',"status":True,"message": message})
@@ -52,7 +52,7 @@ async def welcome_channel_set(guild: int, channel: int):
     if Guild:
         for chann in Guild.channels:
             if chann.id == channel:
-                await db_connect()
+                await db_connect1()
                 doc_ref = await db.welcome.find_first(where={"server_id": guild})
                 if doc_ref is None:
                     cr = await db.welcome.create(data={"server_id": guild, "channel_id": channel, "channel_name": chann.name,"message":"","status":False})
@@ -74,7 +74,7 @@ async def leave_channel_set(guild: int, channel: int):
     if Guild:
         for chann in Guild.channels:
             if chann.id == channel:
-                await db_connect()
+                await db_connect1()
                 leave = await db.goodbye.find_first(where={"server_id": guild})
                 if leave == None:
                     cr = await db.goodbye.create(data={"server_id": guild, "channel_id": channel, "channel_name": chann.name,"message":"","status":False})

@@ -1,5 +1,5 @@
 from fastapi import APIRouter,HTTPException
-from database.connection import db_connect, db_disconnect,db
+from database.connection import *
 from discord.ext import commands
 bot = commands.bot
 import discord
@@ -60,7 +60,7 @@ async def GET_status(guild: int):
     Guild = bot.get_guild(guild)
     # print("Guild:", Guild)
     if Guild:
-        await db_connect()
+        await db_connect1()
         Welcome = await db.welcome.find_unique(where={"server_id": guild})
         Welcome_status = False if Welcome is None else Welcome.status
         # print("Welcome_status:", Welcome_status)
@@ -116,7 +116,7 @@ async def GET_status(guild: int):
 # @router.post("/change_prefix/",dependencies=[Depends(check_api_key)])
 @router.post("/change_prefix", tags=["bot sevrver"])
 async def change_prefix(guild, new_prefix):
-    await db_connect()
+    await db_connect1()
     prefix = await db.server.find_unique(where={"server_id": guild})
     if prefix != None:
         await db.server.update(where={"ID": prefix.ID}, data={"prefix": new_prefix})
@@ -133,7 +133,7 @@ async def set_join_role(guild: int, role: int):
     if Guild:
         role_id = Guild.get_role(role)
         if role_id:
-            await db_connect()
+            await db_connect1()
             server = await db.server.find_first(where={"server_id": Guild.id})
             if server == None:
                 dd = {"server_id": Guild.id, "role_id": role_id.id, "role_name": role_id.name, "status": True}
@@ -160,7 +160,7 @@ async def verify_member_through_role(guild: int, channel: int, role: int):
         for rol in Guild.roles:
             # print("Role_id:",rol.id)
             if rol.id == role:
-                await db_connect()
+                await db_connect1()
                 server = await db.reactionverificationrole.find_first(where={"server_id": Guild.id})
                 DD = {
                         "server_id": f'{Guild.id}',

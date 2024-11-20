@@ -1,5 +1,5 @@
 from fastapi import APIRouter,HTTPException
-from database.connection import db_connect, db_disconnect,db
+from database.connection import *
 from discord.ext import commands
 bot = commands.bot
 
@@ -16,7 +16,7 @@ async def Image_channel_lst(guild: int):
     Guild = bot.get_guild(guild)
     if Guild:
         data = {}
-        await db_connect()
+        await db_connect1()
         img = await db.imagesonly.find_many(where={"server_id": guild})
         await db_disconnect()
         if img != None:
@@ -35,7 +35,7 @@ async def add_img_chhannel(guild: int, channel_id: int):
     if Guild:
         channel_ids = bot.get_channel(int(channel_id))
         if channel_ids:
-            await db_connect()
+            await db_connect1()
             img_update = await db.imagesonly.create(data={"server_id": guild, "channel_name": channel_ids.name, "channel_id": channel_ids.id})
             await db_disconnect()
             print(img_update)
@@ -52,7 +52,7 @@ async def remove_img_channel(guild: int, channel_id: int):
     if Guild:
         channel_ids = bot.get_channel(int(channel_id))
         if channel_ids:
-            await db_connect()
+            await db_connect1()
             img = await db.imagesonly.find_first(where={"server_id": guild, "channel_id": channel_ids.id})
             img_update = await db.imagesonly.delete(where={"ID": img.ID})
             await db_disconnect()
@@ -68,7 +68,7 @@ async def Link_channel_lst(guild: int):
     Guild = bot.get_guild(guild)
     if Guild:
         data = {}
-        await db_connect()
+        await db_connect1()
         link = await db.linksonly.find_first(where={"server_id": guild})
         await db_disconnect()
         if link != None:
@@ -87,7 +87,7 @@ async def remove_link_channel(guild: int, channel_id: int):
     if Guild:
         channel_ids = bot.get_channel(int(channel_id))
         if channel_ids:
-            await db_connect()
+            await db_connect1()
             link = await db.linksonly.find_first(where={"server_id": guild, "channel_id": channel_ids.id})
             rm = await db.linksonly.delete(where={"ID": link.ID})
             await db_disconnect()
@@ -104,7 +104,7 @@ async def add_link_chhannel(guild: int, channel_id: int,):
     if Guild:
         channel_ids = bot.get_channel(int(channel_id))
         if channel_ids:
-            await db_connect()
+            await db_connect1()
             update = await db.linksonly.create(data={"server_id": guild, "channel_name": channel_ids.name, "channel_id": channel_ids.id})
             print("add_link_chhannel:", update)
             await db_disconnect()
