@@ -20,21 +20,10 @@ async def db_connect(self):
             except Exception:
                 continue
 async def db_connect1():
-    try:
-        if not db.is_connected():
-            await db.connect()
-            print("Database connected successfully")
-    except Exception as e:
-        print(f"Database connection error: {e}")
-        # Implement retry logic
-        for attempt in range(3):
-            try:
-                await asyncio.sleep(1)  # Wait before retry
-                await db.connect()
-                print(f"Database reconnected after attempt {attempt + 1}")
-                break
-            except Exception:
-                continue
+    if not db.is_connected():
+        await db.connect()
+        print("Database connected successfully")
+    
 async def db_disconnect():
     '''Disconnect from the database.'''
     if db.is_connected():

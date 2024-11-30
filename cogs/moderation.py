@@ -7,40 +7,61 @@ from discord.ext import commands
 from discord.ext.commands import Context
 from prisma import Prisma
 import asyncio
-
+from database.connection import *
 class Moderation(commands.Cog, name="moderation"):
     def __init__(self, bot:commands.Cog) -> None:
         self.bot = bot
         self.db = Prisma()
         self.Mcolor = discord.Colour.from_rgb(0, 97, 146)
         
-    from database.connection import db_connect, db_disconnect
+    
             
     @commands.hybrid_command(
-        name="help", description="List all commands the bot has loaded.", with_app_command=True
+        name="help",
+        description="List all commands the bot has loaded.",
+        with_app_command=True
     )
-    async def help(self, ctx: commands.Context) -> None:
-        await self.db_connect()
+    async def help(self, ctx: commands.Context):
+        await db_connect(self)
         prefix = await self.db.server.find_first(where={"server_id": ctx.guild.id})
-        await self.db_disconnect()
+        await db_disconnect()
+    
         embed = discord.Embed(
-            title="Help", description="List of available commands:", color=self.Mcolor
+            title="Help",
+            description="List of available commands:",
+            color=self.Mcolor
         )
+    
+        view = discord.ui.View()
+        button_count = 0
+    
         for cog_name, cog in self.bot.cogs.items():
             if cog_name.lower() == "owner" and not await self.bot.is_owner(ctx.author):
                 continue
             commands = cog.get_commands()
             data = []
+        
             for command in commands:
+                if button_count >= 25:  # Discord's limit
+                    break
+                
                 description = command.description.partition("\n")[0]
                 data.append(f"{prefix.prefix}{command.name} - {description}")
+            
+                button = discord.ui.Button(
+                    label=command.name[:80],  # Limit button label length
+                    style=discord.ButtonStyle.secondary,
+                    custom_id=f"cmd_{command.name[:100]}"
+                )
+        
+            
             help_text = "\n".join(data)
-            if help_text:  # Only add the field if there are commands to show
+            if help_text:
                 embed.add_field(
                     name=cog_name.capitalize(), value=f"```{help_text}```", inline=False
                 )
-        await ctx.send(embed=embed)
-
+    
+        await ctx.send(embed=embed, view=view)
     
     @commands.hybrid_command(
         name="kick",

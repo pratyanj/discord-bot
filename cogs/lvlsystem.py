@@ -441,7 +441,7 @@ class Level_System(commands.Cog):
         await db_disconnect()
         await ctx.send(embed=em)
 
-    @commands.hybrid_command(name='rank', help='Check your rank')
+    @commands.hybrid_command(name='rank', description='Check your rank')
     async def rank(self, ctx: commands.Context):
         await db_connect(self)
         server = await self.db.server.find_unique(where={"server_id": ctx.guild.id})
@@ -478,7 +478,7 @@ class Level_System(commands.Cog):
         await ctx.send(embed=em)
         await db_disconnect()
 
-    @commands.hybrid_command(name='lvlsys_set_channel', help='Set channel for level up messages')
+    @commands.hybrid_command(name='lvlsys_set_channel', description='Set channel for level up messages')
     @commands.has_permissions(administrator=True)
     async def set_channel(self, ctx: commands.Context, channel: discord.TextChannel):
         await db_connect(self)
@@ -497,7 +497,7 @@ class Level_System(commands.Cog):
             await db_disconnect()
             await ctx.send(embed=em)
             
-    @commands.hybrid_command(name='reduse_level', help='Set status of level system')
+    @commands.hybrid_command(name='reduse_level', description='Set status of level system')
     @commands.has_permissions(administrator=True)
     async def reduce_lvl(self, ctx: commands.Context,member:discord.Member,amount: int):
         '''
@@ -520,7 +520,7 @@ class Level_System(commands.Cog):
                 em = discord.Embed(description=f"User {member.mention} has now `level {amount}`",color=self.Mcolor)
                 await ctx.send(embed=em)
     
-    @commands.hybrid_command(name='add_xp',help='Add xp to a user')
+    @commands.hybrid_command(name='add_xp',description='Add xp to a user')
     @commands.has_permissions(administrator=True)
     async def add_xp(self, ctx: commands.Context,member:discord.Member,amount: int) -> None:
         """
@@ -561,7 +561,7 @@ class Level_System(commands.Cog):
                 em = discord.Embed(description=f"User {member.mention} has been given `{amount}` xp and is now level `{maybe_new_level}`",color=self.Mcolor)
                 await ctx.send(embed=em)
       
-    @commands.hybrid_command(name='set_no_xp_role',help='role with this user will not gain XP')
+    @commands.hybrid_command(name='set_no_xp_role',description='role with this user will not gain XP')
     @commands.has_permissions(administrator=True)
     async def add_no_xp_role(self, ctx: commands.Context,role:discord.Role):
         '''
@@ -578,7 +578,7 @@ class Level_System(commands.Cog):
             await db_disconnect()
             ctx.send(f"Role {role.name} already in no xp role list")
     
-    @commands.hybrid_command(name='remove_no_xp_role',help='remove role from no xp role list')
+    @commands.hybrid_command(name='remove_no_xp_role',description='remove role from no xp role list')
     @commands.has_permissions(administrator=True)
     async def remove_no_xp_role(self, ctx: commands.Context,role:discord.Role):
         '''
@@ -594,7 +594,7 @@ class Level_System(commands.Cog):
             await db_disconnect()
             ctx.send(f"Role {role.name} removed from no xp role list")
     
-    @commands.hybrid_command(name='add_no_xp-channel',help='In this channel user will not gain XP')
+    @commands.hybrid_command(name='add_no_xp-channel',description='In this channel user will not gain XP')
     @commands.has_permissions(administrator=True)
     async def add_no_xp_channel(self, ctx: commands.Context,channel:discord.TextChannel):
         '''
@@ -611,7 +611,7 @@ class Level_System(commands.Cog):
             await db_disconnect()
             ctx.send(f"Channel {channel.name} already in on xp channel list")
 
-    @commands.hybrid_command(name='remove_no_xp_channel',help='remove channel from no xp channel list')
+    @commands.hybrid_command(name='remove_no_xp_channel',description='remove channel from no xp channel list')
     @commands.has_permissions(administrator=True)
     async def remove_no_xp_channel(self, ctx: commands.Context,channel:discord.TextChannel):
         '''
