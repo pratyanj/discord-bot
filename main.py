@@ -23,7 +23,6 @@ import discord
 from discord.ext import commands
 import asyncio
 import api
-import config
 import os
 
 from prisma import Prisma
@@ -170,7 +169,7 @@ def run_fastapi_app():
     uvicorn.run(app, host="0.0.0.0", port=8001)
 
 def run_discord_bot():
-    bot.run(config.TOKEN)
+    bot.run(os.getenv("DISCORD_TOKEN"))
     
 # if __name__ == "__main__":
 #     run_fastapi_app()

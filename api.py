@@ -14,7 +14,6 @@ from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
 
 from prisma import Prisma
-import config
 import json
 import requests
 from cogs import lvlsystem
@@ -437,7 +436,7 @@ def myAPI(bot: commands.Bot):
 
     @app.get("/login", tags=["dashboard"])
     async def login():
-        return RedirectResponse(url=config.LOGIN_URL)
+        return RedirectResponse(url=os.getenv("DASHBOARD_URL"))
 
     @app.get("/callback/", tags=["dashboard"])
     async def callback(code: str):

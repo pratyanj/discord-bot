@@ -8,7 +8,9 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
 from prisma import Prisma
-import config
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 class General(commands.Cog, name="general"):
     def __init__(self, bot:commands.bot) -> None:
@@ -158,7 +160,7 @@ class General(commands.Cog, name="general"):
         :param context: The hybrid command context.
         """
         embed = discord.Embed(
-            description=f"Invite me by clicking [here]({config.invite_link}).",
+            description=f"Invite me by clicking [here]({os.getenv('invite_link')}).",
             color=self.Mcolor,
         )
         try:
