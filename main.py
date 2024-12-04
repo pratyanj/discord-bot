@@ -171,6 +171,15 @@ if __name__ == "__main__":
     # Create threads for Discord bot and FastAPI app
     discord_thread = threading.Thread(target=run_discord_bot)
     fastapi_thread = threading.Thread(target=run_fastapi_app)
+    
+    # run if it is deploying first time
+    import subprocess
+    command = ["prisma", "db", "push"]
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        print("prisma done:", result.stdout)
+    except subprocess.CalledProcessError as e:
+        print("Failed to prisma:", e.stderr)
 
     # Start both threads
     discord_thread.start()
