@@ -166,7 +166,7 @@ bot = DiscordBot(command_prefix="$", intents=intents)
 def run_fastapi_app():
     import uvicorn
     app = api.myAPI(bot)
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host="0.0.0.0")
 
 def run_discord_bot():
     bot.run(os.getenv("DISCORD_TOKEN"))
